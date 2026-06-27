@@ -1,22 +1,55 @@
+import { useState, useRef } from 'react'
+import Viewer from './components/Viewer.jsx'
+
 export default function App() {
+  const [file, setFile] = useState(null)
+  const [dragging, setDragging] = useState(false)
+  const inputRef = useRef(null)
+
+  const handleFile = (f) => {
+    if (f?.name.toLowerCase().endsWith('.stl')) setFile(f)
+  }
+
+  const onDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    handleFile(e.dataTransfer.files[0])
+  }
+
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>MeshGit</h1>
-      <p>Visual version control for 3D models.</p>
+    <div className="app">
+      <header className="topbar">
+        <span className="logo">MESHGIT</span>
+        <div className="topbar-meta">
+          <span className="status-dot" />
+          <span>v0.1.0 // {file ? 'MESH LOADED' : 'READY'}</span>
+        </div>
+      </header>
+
       <div
-        id="viewport"
-        style={{
-          width: '100%',
-          height: '600px',
-          background: '#1a1a1a',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#666',
-        }}
+        className={`dropbar${dragging ? ' active' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
       >
-        3D viewport coming soon
+        <span className="prompt">&gt;_</span>
+        <span className={`drop-label${file ? ' loaded' : ''}`}>
+          {file ? file.name : 'DROP .STL FILE HERE'}
+        </span>
+        <button className="browse-btn" onClick={() => inputRef.current.click()}>
+          {file ? '[ REPLACE ]' : '[ BROWSE ]'}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".stl"
+          style={{ display: 'none' }}
+          onChange={(e) => handleFile(e.target.files[0])}
+        />
+      </div>
+
+      <div className="viewport">
+        <Viewer file={file} />
       </div>
     </div>
   )
