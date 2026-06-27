@@ -1,0 +1,11 @@
+{
+  "name": "meshgit",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build": "pnpm -r build",
+    "install:all": "pnpm install"
+  }
+}

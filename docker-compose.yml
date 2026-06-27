@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: meshgit
+      POSTGRES_PASSWORD: meshgit
+      POSTGRES_DB: meshgit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./packages/backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://meshgit:meshgit@postgres:5432/meshgit
+      GEOMETRY_SERVICE_URL: http://geometry:8000
+      PORT: 3001
+    depends_on:
+      - postgres
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/backend/src
+          target: /app/src
+
+  geometry:
+    build: ./packages/geometry
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/frontend/src
+          target: /app/src
+
+volumes:
+  postgres_data:
