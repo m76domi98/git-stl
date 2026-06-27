@@ -27,7 +27,7 @@ export default function Viewer({ file }) {
     const height = mount.clientHeight
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x07090f)
+    scene.background = new THREE.Color(0xf2ecfa)
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000)
 
@@ -36,11 +36,11 @@ export default function Viewer({ file }) {
     renderer.setSize(width, height)
     mount.appendChild(renderer.domElement)
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
-    const dirLight = new THREE.DirectionalLight(0x00d4aa, 0.6)
+    scene.add(new THREE.AmbientLight(0xddd0f5, 0.9))
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0)
     dirLight.position.set(5, 10, 7)
     scene.add(dirLight)
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3)
+    const fillLight = new THREE.DirectionalLight(0xc4a8f0, 0.5)
     fillLight.position.set(-5, -3, -5)
     scene.add(fillLight)
 
@@ -48,19 +48,26 @@ export default function Viewer({ file }) {
     controls.enableDamping = true
     controls.dampingFactor = 0.06
 
+    let geometry, edges
+
     const reader = new FileReader()
     reader.onload = (e) => {
-      const geometry = new STLLoader().parse(e.target.result)
+      geometry = new STLLoader().parse(e.target.result)
       geometry.computeVertexNormals()
 
       const material = new THREE.MeshPhongMaterial({
-        color: 0x1e2a3a,
-        specular: 0x00d4aa,
-        shininess: 60,
-        emissive: 0x0d1117,
+        color: 0x9b8bbf,
+        specular: 0xfaf6ff,
+        shininess: 50,
       })
       const mesh = new THREE.Mesh(geometry, material)
       scene.add(mesh)
+
+      // Slightly darker purple edges for definition
+      edges = new THREE.EdgesGeometry(geometry, 15)
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x6b46c1, transparent: true, opacity: 0.5 })
+      const wireframe = new THREE.LineSegments(edges, lineMat)
+      scene.add(wireframe)
 
       const box = new THREE.Box3().setFromObject(mesh)
       const center = box.getCenter(new THREE.Vector3())
@@ -99,6 +106,8 @@ export default function Viewer({ file }) {
       cancelAnimationFrame(animId)
       ro.disconnect()
       controls.dispose()
+      geometry?.dispose()
+      edges?.dispose()
       renderer.dispose()
       mount.removeChild(renderer.domElement)
     }

@@ -1,10 +1,23 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Viewer from './components/Viewer.jsx'
+
+const TITLE = 'MESHGIT'
 
 export default function App() {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [typed, setTyped] = useState('')
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    let i = 0
+    const interval = setInterval(() => {
+      i++
+      setTyped(TITLE.slice(0, i))
+      if (i === TITLE.length) clearInterval(interval)
+    }, 100)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleFile = (f) => {
     if (f?.name.toLowerCase().endsWith('.stl')) setFile(f)
@@ -19,7 +32,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="logo">MESHGIT</span>
+        <span className="logo">{typed}<span className="cursor">|</span></span>
         <div className="topbar-meta">
           <span className="status-dot" />
           <span>v0.1.0 // {file ? 'MESH LOADED' : 'READY'}</span>

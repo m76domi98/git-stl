@@ -5,13 +5,14 @@
 }
 
 :root {
-  --bg: #07090f;
-  --surface: #0d1117;
-  --border: #1e2a3a;
-  --accent: #00d4aa;
-  --accent-glow: #00d4aa26;
-  --text: #cdd6f4;
-  --muted: #4a5568;
+  --bg: #0e0b14;
+  --surface: #13101c;
+  --border: #2a2040;
+  --accent: #c4a8f0;
+  --accent-glow: #c4a8f022;
+  --text: #ede8f5;
+  --muted: #6b5f8a;
+  --viewport-bg: #f2ecfa;
   --mono: 'JetBrains Mono', monospace;
 }
 
@@ -138,8 +139,8 @@ button {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  background-color: var(--bg);
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-color: var(--viewport-bg);
+  background-image: radial-gradient(circle, #ddd5f0 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -156,7 +157,7 @@ button {
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--border);
+  background: #c4b8e8;
 }
 
 .crosshair::after {
@@ -166,7 +167,7 @@ button {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--border);
+  background: #c4b8e8;
 }
 
 .origin {
@@ -177,8 +178,8 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  background: #7c3aed;
+  box-shadow: 0 0 8px #7c3aed66;
 }
 
 .axis-x, .axis-y {
@@ -186,7 +187,7 @@ button {
   font-size: 0.6rem;
   font-weight: 500;
   letter-spacing: 0.1em;
-  color: var(--muted);
+  color: #9b8bbf;
 }
 
 .axis-x { top: 50%; right: -18px; transform: translateY(-50%); }
@@ -195,7 +196,7 @@ button {
 .empty-hint {
   font-size: 0.7rem;
   letter-spacing: 0.18em;
-  color: var(--muted);
+  color: #9b8bbf;
   text-transform: uppercase;
 }
 
@@ -210,4 +211,15 @@ button {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.2; }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor {
+  color: var(--accent);
+  animation: cursor-blink 0.8s step-end infinite;
+  margin-left: 1px;
 }
