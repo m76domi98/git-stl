@@ -2,9 +2,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: meshgit
-      POSTGRES_PASSWORD: meshgit
-      POSTGRES_DB: meshgit
+      POSTGRES_USER: ${POSTGRES_USER:-meshgit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-meshgit}
     ports:
       - "5432:5432"
     volumes:
@@ -15,9 +15,16 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgres://meshgit:meshgit@postgres:5432/meshgit
+      DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
       GEOMETRY_SERVICE_URL: http://geometry:8000
       PORT: 3001
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL:-http://localhost:3001/api/auth/github/callback}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3001}
     depends_on:
       - postgres
     develop:

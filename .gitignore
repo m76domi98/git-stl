@@ -3,6 +3,7 @@ node_modules/
 dist/
 .env
 .env.local
+.env.example
 
 # Python
 __pycache__/
@@ -20,3 +21,4 @@ Thumbs.db
 *.log
 
 CLAUDE.md
+.claude/

@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
+import { useAuth } from './context/AuthContext.jsx'
+import Login from './components/Login.jsx'
 import Viewer from './components/Viewer.jsx'
 
 const TITLE = 'MESHGIT'
 
 export default function App() {
+  const { user, logout } = useAuth()
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [typed, setTyped] = useState('')
@@ -29,13 +32,25 @@ export default function App() {
     handleFile(e.dataTransfer.files[0])
   }
 
+  // Still loading auth state
+  if (user === undefined) return null
+
+  if (user === null) return <Login />
+
   return (
     <div className="app">
       <header className="topbar">
         <span className="logo">{typed}<span className="cursor">|</span></span>
         <div className="topbar-meta">
           <span className="status-dot" />
-          <span>v0.1.0 // {file ? 'MESH LOADED' : 'READY'}</span>
+          <span>@{user.githubUsername}</span>
+          <span style={{ color: 'var(--border)', userSelect: 'none' }}>·</span>
+          <button
+            onClick={logout}
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.7rem', letterSpacing: '0.1em', padding: 0, fontFamily: 'var(--mono)' }}
+          >
+            logout
+          </button>
         </div>
       </header>
 

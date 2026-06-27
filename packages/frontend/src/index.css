@@ -200,6 +200,62 @@ button {
   text-transform: uppercase;
 }
 
+/* ── Login screen ──────────────────────────────────── */
+.login-screen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 56px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.login-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text);
+}
+
+.login-logo-accent {
+  color: var(--accent);
+}
+
+.login-tagline {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.github-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.github-btn:hover { opacity: 0.85; }
+
 /* ── App shell ─────────────────────────────────────── */
 .app {
   display: flex;
