@@ -11,9 +11,11 @@ export async function login() {
     console.error('Failed to reach MeshGit server. Is it running?')
     process.exit(1)
   }
-  const { device_code, url } = await initRes.json()
+  const { device_code, user_code, url } = await initRes.json()
 
-  console.log(`\nOpening browser for GitHub login...`)
+  console.log(`\nYour authorization code: ${user_code}`)
+  console.log(`The browser page will show this code — only proceed if they match.\n`)
+  console.log(`Opening browser...`)
   console.log(`If it doesn't open, visit: ${url}\n`)
   await open(url)
 

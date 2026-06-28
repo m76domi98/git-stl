@@ -21,4 +21,6 @@ Thumbs.db
 *.log
 
 CLAUDE.md
-.claude/
+.claude/1
+
+tasks-completed/

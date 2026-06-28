@@ -34,6 +34,11 @@ app.use('/api/commits', commitsRouter)
 app.use('/api/diff', diffRouter)
 app.use('/api/merge', mergeRouter)
 
+app.use((err, req, res, _next) => {
+  console.error(`[ERROR] ${req.method} ${req.url}:`, err.message, err.stack)
+  res.status(500).json({ error: err.message })
+})
+
 migrate().then(() => {
   app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))
 })

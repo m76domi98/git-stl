@@ -23,6 +23,10 @@ export async function migrate() {
     ALTER TABLE cli_auth_codes ADD COLUMN IF NOT EXISTS state_token TEXT UNIQUE;
   `)
 
+  await pool.query(`
+    ALTER TABLE cli_auth_codes ADD COLUMN IF NOT EXISTS user_code TEXT;
+  `)
+
   // Track when a user's tokens were last invalidated (server-side logout)
   await pool.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_invalidated_at TIMESTAMPTZ;

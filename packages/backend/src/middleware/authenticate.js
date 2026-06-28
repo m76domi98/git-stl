@@ -18,7 +18,10 @@ export async function authenticate(req, res, next) {
     'SELECT tokens_invalidated_at FROM users WHERE id = $1',
     [payload.userId]
   )
-  const invalidatedAt = rows[0]?.tokens_invalidated_at
+  if (!rows.length) {
+    return res.status(401).json({ error: 'User not found' })
+  }
+  const invalidatedAt = rows[0].tokens_invalidated_at
   if (invalidatedAt && payload.iat * 1000 < new Date(invalidatedAt).getTime()) {
     return res.status(401).json({ error: 'Token has been revoked' })
   }

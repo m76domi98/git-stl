@@ -66,33 +66,83 @@ router.post('/logout', authenticate, async (req, res) => {
 router.post('/cli-initiate', async (_req, res) => {
   const deviceCode = crypto.randomBytes(20).toString('hex')
   const stateToken = crypto.randomBytes(20).toString('hex')
+  // 6-digit code the CLI displays and the browser confirmation page echoes back;
+  // the user verifies they match before authorizing (RFC 8628 §6.1 phishing mitigation)
+  const userCode = crypto.randomInt(100000, 1000000).toString()
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
   await pool.query(
-    'INSERT INTO cli_auth_codes (device_code, state_token, expires_at) VALUES ($1, $2, $3)',
-    [deviceCode, stateToken, expiresAt]
+    'INSERT INTO cli_auth_codes (device_code, state_token, user_code, expires_at) VALUES ($1, $2, $3, $4)',
+    [deviceCode, stateToken, userCode, expiresAt]
   )
 
-  // FIX 2: The browser receives a state_token, never the device_code.
-  // The device_code stays on the CLI side only.
   res.json({
     device_code: deviceCode,
+    user_code: userCode,
     url: `${BACKEND_URL()}/api/auth/cli-login?state=${stateToken}`,
   })
 })
 
-router.get('/cli-login', async (req, res, next) => {
+// Show a confirmation page — user must verify the code matches their terminal
+// before we start the GitHub OAuth redirect.
+router.get('/cli-login', async (req, res) => {
   const { state } = req.query
 
-  // Validate that this state_token was actually issued by us and is still live
   const { rows } = await pool.query(
-    'SELECT device_code FROM cli_auth_codes WHERE state_token = $1 AND expires_at > NOW()',
+    'SELECT user_code FROM cli_auth_codes WHERE state_token = $1 AND expires_at > NOW()',
     [state]
   )
   if (!rows.length) return res.status(400).send('Invalid or expired login link.')
 
-  // Bind the validated state to the session — the callback reads from here,
-  // never from the URL, so an attacker cannot substitute their own state.
+  // Bind a CSRF nonce to this browser session so /cli-confirm can verify the
+  // user actually loaded this page — a cross-origin form POST cannot read or
+  // set this cookie, blocking CSRF bypass of the user_code verification step.
+  const csrfNonce = crypto.randomBytes(16).toString('hex')
+  req.session.cli_csrf = csrfNonce
+
+  res.send(`<!DOCTYPE html><html><head><title>MeshGit Authorization</title>
+<style>
+  body{font-family:monospace;max-width:420px;margin:4rem auto;padding:1rem;color:#1a1a2e}
+  h2{margin-bottom:.5rem}
+  .code{font-size:2rem;letter-spacing:.3em;background:#f0ebfa;padding:.6rem 1.2rem;
+        border-radius:6px;display:inline-block;margin:1rem 0}
+  p{line-height:1.6;color:#444}
+  .btn{display:block;width:100%;padding:.8rem;background:#7c3aed;color:#fff;
+       border:none;border-radius:6px;font-size:1rem;cursor:pointer;margin-top:1.5rem}
+  .btn:hover{background:#6d28d9}
+  .warning{font-size:.85rem;color:#666;margin-top:1.5rem}
+</style></head><body>
+<h2>MeshGit CLI Authorization</h2>
+<p>Your terminal should display this code:</p>
+<div class="code">${rows[0].user_code}</div>
+<p><strong>Only continue if your terminal shows exactly this code.</strong></p>
+<form method="POST" action="/api/auth/cli-confirm">
+  <input type="hidden" name="state" value="${state}">
+  <input type="hidden" name="csrf_nonce" value="${csrfNonce}">
+  <button type="submit" class="btn">Yes, authorize this device</button>
+</form>
+<p class="warning">If you did not run <code>meshgit login</code>, close this page — someone may be trying to hijack your account.</p>
+</body></html>`)
+})
+
+// User confirmed the code — verify CSRF nonce then start GitHub OAuth redirect
+router.post('/cli-confirm', async (req, res, next) => {
+  const { state, csrf_nonce } = req.body
+  if (!state) return res.status(400).send('Missing state.')
+
+  // Reject if the nonce is missing or doesn't match what we set in /cli-login.
+  // A cross-origin CSRF form POST cannot read or supply this value.
+  if (!req.session.cli_csrf || csrf_nonce !== req.session.cli_csrf) {
+    return res.status(403).send('Invalid CSRF token. Please use the link from your terminal.')
+  }
+  delete req.session.cli_csrf
+
+  const { rows } = await pool.query(
+    'SELECT device_code FROM cli_auth_codes WHERE state_token = $1 AND expires_at > NOW()',
+    [state]
+  )
+  if (!rows.length) return res.status(400).send('Invalid or expired session.')
+
   req.session.cli_state = state
 
   passport.authenticate('github', {
