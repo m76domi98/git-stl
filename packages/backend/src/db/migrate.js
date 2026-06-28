@@ -32,5 +32,33 @@ export async function migrate() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_invalidated_at TIMESTAMPTZ;
   `)
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      owner_id    UUID NOT NULL REFERENCES users(id),
+      name        TEXT NOT NULL,
+      description TEXT,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS meshes (
+      id           UUID PRIMARY KEY,
+      file_size    INTEGER,
+      vertex_count INTEGER,
+      face_count   INTEGER,
+      created_at   TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS commits (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id UUID NOT NULL REFERENCES projects(id),
+      parent_id  UUID REFERENCES commits(id),
+      mesh_id    UUID NOT NULL REFERENCES meshes(id),
+      author_id  UUID NOT NULL REFERENCES users(id),
+      message    TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `)
+
   console.log('Database migrations applied')
 }

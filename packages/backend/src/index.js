@@ -41,6 +41,9 @@ app.use('/api/diff', authenticate, diffRouter)
 app.use('/api/merge', authenticate, mergeRouter)
 
 app.use((err, req, res, _next) => {
+  // multer errors: LIMIT_FILE_SIZE → 413, fileFilter rejection → 400
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File too large (max 50 MB)' })
+  if (err.status === 400) return res.status(400).json({ error: err.message })
   console.error(`[ERROR] ${req.method} ${req.url}:`, err.message, err.stack)
   res.status(500).json({ error: err.message })
 })
