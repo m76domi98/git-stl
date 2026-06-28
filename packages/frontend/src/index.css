@@ -263,6 +263,193 @@ button {
   height: 100%;
 }
 
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Sidebar ───────────────────────────────────────── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.sidebar-new-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.new-project-form {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.new-project-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 5px 8px;
+  outline: none;
+  width: 100%;
+}
+
+.new-project-input:focus { border-color: var(--accent); }
+
+.new-project-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sidebar-action-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sidebar-action-btn:hover { background: var(--accent); color: var(--bg); }
+.sidebar-action-btn.muted { border-color: var(--border); color: var(--muted); }
+.sidebar-action-btn.muted:hover { background: var(--border); color: var(--text); }
+
+.sidebar-error {
+  padding: 8px 12px;
+  font-size: 0.68rem;
+  color: #f87171;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.project-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.project-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.project-item:hover { background: var(--accent-glow); }
+.project-item.active { background: var(--accent-glow); border-left: 2px solid var(--accent); padding-left: 12px; }
+
+.project-name {
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.gh-link {
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+}
+
+.gh-link:hover { text-decoration: underline; }
+
+.gh-connect-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  padding: 0;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: color 0.12s;
+}
+
+.gh-connect-btn:hover { color: var(--accent); }
+.gh-connect-btn:disabled { opacity: 0.5; cursor: default; }
+
+.project-empty {
+  padding: 16px 14px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Commit controls in dropbar ────────────────────── */
+.commit-msg-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  outline: none;
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.commit-msg-input:focus { border-color: var(--accent); }
+
+.commit-btn { margin-left: 4px; }
+
+.commit-error {
+  padding: 6px 20px;
+  font-size: 0.7rem;
+  color: #f87171;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
 /* ── Animations ────────────────────────────────────── */
 @keyframes blink {
   0%, 100% { opacity: 1; }

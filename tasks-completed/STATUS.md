@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-06-28
+Last updated: 2026-06-28 (GitHub integration)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -120,6 +120,22 @@ commits (id UUID PK, project_id UUID FK projects.id,
 ---
 
 ## What Is NOT Built Yet (Remaining Roadmap)
+
+### 11. GitHub Repository Integration ✓
+Positioning: GitHub is the storage/visibility layer (repo appears on user's GitHub profile, GitHub renders STL previews natively). MeshGit is the 3D workflow layer: visual diffs, branches, PRs, merge. Same model as Vercel/Netlify on top of GitHub.
+
+- [x] DB migration: `github_access_token TEXT` (AES-256-GCM encrypted, app-layer) on `users`
+- [x] DB migration: `github_repo_owner TEXT`, `github_repo_name TEXT` on `projects`
+- [x] OAuth scope: added `repo` to passport strategy; access token saved (encrypted) on login/upsert
+- [x] `POST /api/projects/:id/github` — creates GitHub repo via Octokit, stores owner+name, pushes latest commit if one exists
+- [x] Commit mirroring: after `POST /api/commits`, pushes STL to GitHub via Git Data API (blob → tree → commit → ref update), fire-and-forget so it doesn't block the response
+- [x] Frontend: projects sidebar (create, list, select), "Connect to GitHub" / GitHub link per project
+- [x] Frontend: project-aware dropbar — when project selected, shows commit message input + "COMMIT → [project]" button
+- [x] New env var: `GITHUB_TOKEN_ENCRYPTION_KEY` (64 hex chars / 32 bytes); generated and added to `.env`
+
+Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in `crypto` (AES-256-GCM) — no pgcrypto extension required.
+
+**Note:** Users must log out and back in after this deploy so the new `repo` OAuth scope is granted and the access token is captured.
 
 ### Weeks 3–4: Commit Graph + Version History
 - [ ] `GET /api/commits/history` — return full commit graph for a project (parent chain → DAG)

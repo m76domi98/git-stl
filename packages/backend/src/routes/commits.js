@@ -3,6 +3,8 @@ import multer from 'multer'
 import { randomUUID } from 'crypto'
 import pool from '../db.js'
 import { storeMesh } from '../storage.js'
+import { decrypt } from '../lib/tokenCrypto.js'
+import { pushCommitToGitHub } from '../lib/githubSync.js'
 
 const router = Router()
 
@@ -49,7 +51,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     if (!req.file) return res.status(400).json({ error: 'STL file required' })
 
     const { rows: [project] } = await pool.query(
-      'SELECT id FROM projects WHERE id = $1 AND owner_id = $2',
+      'SELECT id, github_repo_owner, github_repo_name FROM projects WHERE id = $1 AND owner_id = $2',
       [project_id, req.user.userId]
     )
     if (!project) return res.status(404).json({ error: 'Project not found' })
@@ -77,6 +79,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     // Write to DB + disk atomically (DB first; roll back on failure)
     const meshId = randomUUID()
     const client = await pool.connect()
+    let commit
     try {
       await client.query('BEGIN')
 
@@ -90,22 +93,42 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         [project_id]
       )
 
-      const { rows: [commit] } = await client.query(
+      const { rows: [savedCommit] } = await client.query(
         `INSERT INTO commits (project_id, parent_id, mesh_id, author_id, message)
          VALUES ($1, $2, $3, $4, $5) RETURNING *`,
         [project_id, parent?.id || null, meshId, req.user.userId, message || '']
       )
+      commit = savedCommit
 
       await storeMesh(project_id, meshId, cleanedBuffer)
 
       await client.query('COMMIT')
-      res.status(201).json({ ...commit, vertex_count: vertexCount, face_count: faceCount, file_size: cleanedBuffer.length })
     } catch (err) {
       await client.query('ROLLBACK')
       throw err
     } finally {
       client.release()
     }
+
+    // Mirror to GitHub if the project is linked — fire-and-forget, don't block the response
+    if (project.github_repo_owner && project.github_repo_name) {
+      const { rows: [userRow] } = await pool.query(
+        'SELECT github_access_token FROM users WHERE id = $1',
+        [req.user.userId]
+      )
+      if (userRow?.github_access_token) {
+        pushCommitToGitHub({
+          token: decrypt(userRow.github_access_token),
+          owner: project.github_repo_owner,
+          repo: project.github_repo_name,
+          meshId,
+          projectId: project_id,
+          message: message || '',
+        }).catch((err) => console.error('[github-sync] push failed:', err.message))
+      }
+    }
+
+    res.status(201).json({ ...commit, vertex_count: vertexCount, face_count: faceCount, file_size: cleanedBuffer.length })
   } catch (err) { next(err) }
 })
 

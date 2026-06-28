@@ -2,15 +2,21 @@ import { useState, useRef, useEffect } from 'react'
 import { useAuth } from './context/AuthContext.jsx'
 import Login from './components/Login.jsx'
 import Viewer from './components/Viewer.jsx'
+import Projects from './components/Projects.jsx'
 
 const TITLE = 'MESHGIT'
 
 export default function App() {
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [typed, setTyped] = useState('')
+  const [selectedProject, setSelectedProject] = useState(null)
+  const [committing, setCommitting] = useState(false)
+  const [commitMsg, setCommitMsg] = useState('')
+  const [commitError, setCommitError] = useState(null)
   const inputRef = useRef(null)
+  const fileRef = useRef(null)
 
   useEffect(() => {
     let i = 0
@@ -23,7 +29,11 @@ export default function App() {
   }, [])
 
   const handleFile = (f) => {
-    if (f?.name.toLowerCase().endsWith('.stl')) setFile(f)
+    if (f?.name.toLowerCase().endsWith('.stl')) {
+      setFile(f)
+      fileRef.current = f
+      setCommitError(null)
+    }
   }
 
   const onDrop = (e) => {
@@ -32,9 +42,30 @@ export default function App() {
     handleFile(e.dataTransfer.files[0])
   }
 
-  // Still loading auth state
-  if (user === undefined) return null
+  const pushCommit = async () => {
+    if (!file || !selectedProject) return
+    setCommitting(true)
+    setCommitError(null)
+    const form = new FormData()
+    form.append('file', file)
+    form.append('project_id', selectedProject.id)
+    form.append('message', commitMsg.trim() || file.name)
+    const r = await fetch('/api/commits', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
+    setCommitting(false)
+    if (r.ok) {
+      setCommitMsg('')
+      setSelectedProject((p) => p ? { ...p, commit_count: (p.commit_count || 0) + 1 } : p)
+    } else {
+      const body = await r.json().catch(() => ({}))
+      setCommitError(body.error || body.detail || 'Commit failed')
+    }
+  }
 
+  if (user === undefined) return null
   if (user === null) return <Login />
 
   return (
@@ -54,30 +85,61 @@ export default function App() {
         </div>
       </header>
 
-      <div
-        className={`dropbar${dragging ? ' active' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <span className="prompt">&gt;_</span>
-        <span className={`drop-label${file ? ' loaded' : ''}`}>
-          {file ? file.name : 'DROP .STL FILE HERE'}
-        </span>
-        <button className="browse-btn" onClick={() => inputRef.current.click()}>
-          {file ? '[ REPLACE ]' : '[ BROWSE ]'}
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".stl"
-          style={{ display: 'none' }}
-          onChange={(e) => handleFile(e.target.files[0])}
+      <div className="app-body">
+        <Projects
+          token={token}
+          selectedProject={selectedProject}
+          onSelect={setSelectedProject}
         />
-      </div>
 
-      <div className="viewport">
-        <Viewer file={file} />
+        <div className="app-main">
+          <div
+            className={`dropbar${dragging ? ' active' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+          >
+            <span className="prompt">&gt;_</span>
+            <span className={`drop-label${file ? ' loaded' : ''}`}>
+              {file ? file.name : 'DROP .STL FILE HERE'}
+            </span>
+            <button className="browse-btn" onClick={() => inputRef.current.click()}>
+              {file ? '[ REPLACE ]' : '[ BROWSE ]'}
+            </button>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".stl"
+              style={{ display: 'none' }}
+              onChange={(e) => handleFile(e.target.files[0])}
+            />
+
+            {file && selectedProject && (
+              <>
+                <input
+                  className="commit-msg-input"
+                  placeholder="commit message (optional)"
+                  value={commitMsg}
+                  onChange={(e) => setCommitMsg(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && pushCommit()}
+                />
+                <button
+                  className="browse-btn commit-btn"
+                  onClick={pushCommit}
+                  disabled={committing}
+                >
+                  {committing ? '[ ... ]' : `[ COMMIT → ${selectedProject.name.toUpperCase()} ]`}
+                </button>
+              </>
+            )}
+          </div>
+
+          {commitError && <div className="commit-error">{commitError}</div>}
+
+          <div className="viewport">
+            <Viewer file={file} />
+          </div>
+        </div>
       </div>
     </div>
   )

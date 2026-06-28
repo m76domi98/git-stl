@@ -9,10 +9,12 @@ import projectsRouter from './routes/projects.js'
 import commitsRouter from './routes/commits.js'
 import diffRouter from './routes/diff.js'
 import mergeRouter from './routes/merge.js'
+import githubRouter from './routes/github.js'
 import { authenticate } from './middleware/authenticate.js'
 
 if (!process.env.SESSION_SECRET) throw new Error('SESSION_SECRET env var is required')
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET env var is required')
+if (!process.env.GITHUB_TOKEN_ENCRYPTION_KEY) throw new Error('GITHUB_TOKEN_ENCRYPTION_KEY env var is required')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -36,6 +38,7 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 
 app.use('/api/auth', authRouter)
 app.use('/api/projects', authenticate, projectsRouter)
+app.use('/api/projects', authenticate, githubRouter)
 app.use('/api/commits', authenticate, commitsRouter)
 app.use('/api/diff', authenticate, diffRouter)
 app.use('/api/merge', authenticate, mergeRouter)

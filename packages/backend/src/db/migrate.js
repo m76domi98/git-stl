@@ -33,12 +33,18 @@ export async function migrate() {
   `)
 
   await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS github_access_token TEXT;
+  `)
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS projects (
-      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      owner_id    UUID NOT NULL REFERENCES users(id),
-      name        TEXT NOT NULL,
-      description TEXT,
-      created_at  TIMESTAMPTZ DEFAULT NOW()
+      id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      owner_id          UUID NOT NULL REFERENCES users(id),
+      name              TEXT NOT NULL,
+      description       TEXT,
+      github_repo_owner TEXT,
+      github_repo_name  TEXT,
+      created_at        TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS meshes (
@@ -58,6 +64,13 @@ export async function migrate() {
       message    TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `)
+
+  await pool.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_repo_owner TEXT;
+  `)
+  await pool.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_repo_name TEXT;
   `)
 
   console.log('Database migrations applied')
