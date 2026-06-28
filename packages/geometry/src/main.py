@@ -21,6 +21,8 @@ async def clean_mesh(file: UploadFile = File(...)):
 
     if not isinstance(mesh, trimesh.Trimesh):
         raise HTTPException(status_code=422, detail="STL must contain a single mesh")
+    if len(mesh.faces) == 0:
+        raise HTTPException(status_code=422, detail="STL file contains no valid geometry")
 
     # Repair: deduplicate vertices, remove degenerate/duplicate faces, fix winding/normals
     mesh.process(validate=True)

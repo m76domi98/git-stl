@@ -64,7 +64,9 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     const geometryUrl = process.env.GEOMETRY_SERVICE_URL || 'http://geometry:8000'
     const cleanRes = await fetch(`${geometryUrl}/clean`, { method: 'POST', body: form })
     if (!cleanRes.ok) {
-      const detail = await cleanRes.json().catch(() => ({}))
+      const text = await cleanRes.text().catch(() => '')
+      let detail = text
+      try { detail = JSON.parse(text).detail ?? text } catch {}
       return res.status(422).json({ error: 'Mesh cleaning failed', detail })
     }
 
