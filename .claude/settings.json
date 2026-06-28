@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "asyncRewake": true,
+            "statusMessage": "Checking if STATUS.md needs updating...",
+            "command": "LAST_COMMIT=$(git log -1 --format=\"%ct\" 2>/dev/null || echo 0); STATUS_T=$(git log -1 --format=\"%ct\" -- tasks-completed/STATUS.md 2>/dev/null); [ -z \"$STATUS_T\" ] && STATUS_T=$(stat -c %Y tasks-completed/STATUS.md 2>/dev/null || echo 0); if [ -n \"$LAST_COMMIT\" ] && [ \"$LAST_COMMIT\" -gt \"$STATUS_T\" ]; then echo \"tasks-completed/STATUS.md is stale — commits exist that are newer than the last STATUS.md update. Please update it to reflect the work just done, then commit it.\"; exit 2; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
