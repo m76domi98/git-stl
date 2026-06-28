@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
     fetch('/api/auth/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ code: exchangeCode }),
     })
       .then((r) => r.ok ? r.json() : null)
