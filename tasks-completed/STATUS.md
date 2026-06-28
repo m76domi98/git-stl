@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-06-28 (GitHub integration)
+Last updated: 2026-06-28 (GitHub integration + docker-compose fix)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -136,6 +136,9 @@ Positioning: GitHub is the storage/visibility layer (repo appears on user's GitH
 Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in `crypto` (AES-256-GCM) — no pgcrypto extension required.
 
 **Note:** Users must log out and back in after this deploy so the new `repo` OAuth scope is granted and the access token is captured.
+
+- [x] `docker-compose.yml`: added `GITHUB_TOKEN_ENCRYPTION_KEY` to backend env block (was missing — would crash on startup)
+- [x] `.gitignore`: added `package-lock.json` and `uploads/`
 
 ### Weeks 3–4: Commit Graph + Version History
 - [ ] `GET /api/commits/history` — return full commit graph for a project (parent chain → DAG)
