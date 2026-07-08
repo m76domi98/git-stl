@@ -3,9 +3,10 @@ export default function Login() {
     <div className="login-screen">
       <div className="login-card">
         <div className="login-logo">
-          MESH<span className="login-logo-accent">GIT</span>
+          <span className="logo-mark" style={{ width: 28, height: 28, borderRadius: 8 }} />
+          MeshGit
         </div>
-        <p className="login-tagline">// visual version control for 3D models</p>
+        <p className="login-tagline">Visual version control for 3D models</p>
         <a className="github-btn" href="/api/auth/github">
           <svg height="18" viewBox="0 0 16 16" width="18" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38

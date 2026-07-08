@@ -2,7 +2,7 @@ import { Router } from 'express'
 import multer from 'multer'
 import { randomUUID } from 'crypto'
 import pool from '../db.js'
-import { storeMesh } from '../storage.js'
+import { storeMesh, readMesh } from '../storage.js'
 import { decrypt } from '../lib/tokenCrypto.js'
 import { pushCommitToGitHub } from '../lib/githubSync.js'
 
@@ -10,7 +10,8 @@ const router = Router()
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
+  // ponytail: 500MB in-memory buffer per upload; move to disk/streaming storage if concurrent large uploads start pressuring RAM
+  limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.originalname.toLowerCase().endsWith('.stl')) {
       cb(null, true)
@@ -33,14 +34,31 @@ router.get('/', async (req, res, next) => {
 
     const { rows } = await pool.query(
       `SELECT c.id, c.parent_id, c.message, c.created_at,
-              m.vertex_count, m.face_count, m.file_size
+              m.vertex_count, m.face_count, m.file_size,
+              u.github_username AS author
        FROM commits c
        JOIN meshes m ON m.id = c.mesh_id
+       JOIN users u ON u.id = c.author_id
        WHERE c.project_id = $1
        ORDER BY c.created_at DESC`,
       [project_id]
     )
     res.json(rows)
+  } catch (err) { next(err) }
+})
+
+router.get('/:id/file', async (req, res, next) => {
+  try {
+    const { rows: [commit] } = await pool.query(
+      `SELECT c.project_id, c.mesh_id FROM commits c
+       JOIN projects p ON p.id = c.project_id
+       WHERE c.id = $1 AND p.owner_id = $2`,
+      [req.params.id, req.user.userId]
+    )
+    if (!commit) return res.status(404).json({ error: 'Commit not found' })
+
+    const buffer = await readMesh(commit.project_id, commit.mesh_id)
+    res.set('Content-Type', 'application/octet-stream').send(buffer)
   } catch (err) { next(err) }
 })
 
@@ -131,7 +149,5 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     res.status(201).json({ ...commit, vertex_count: vertexCount, face_count: faceCount, file_size: cleanedBuffer.length })
   } catch (err) { next(err) }
 })
-
-router.get('/history', (_req, res) => res.status(501).json({ error: 'Not implemented' }))
 
 export default router

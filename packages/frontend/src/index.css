@@ -5,130 +5,284 @@
 }
 
 :root {
-  --bg: #0e0b14;
-  --surface: #13101c;
-  --border: #2a2040;
-  --accent: #c4a8f0;
-  --accent-glow: #c4a8f022;
-  --text: #ede8f5;
-  --muted: #6b5f8a;
-  --viewport-bg: #f2ecfa;
+  /* Site chrome: neutral earth tones */
+  --bg: #F4F6F0;
+  --surface: #FDFCF8;
+  --surface-2: #EBE7DA;
+  --border: #DDD6C4;
+  --accent: #3B4A3F;
+  --accent-soft: #3B4A3F1a;
+  --clay: #D4A373;
+  --clay-soft: #D4A37333;
+  --clay-text: #8a5a2c;
+  --text: #24261F;
+  --muted: #5B5F53;
+  --green: #22c55e;
+  --red: #ef4444;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+
+  /* Viewport/model zone stays fixed dark regardless of site theme */
+  --viewport-bg: #0a0c14;
+  --viewport-border: #242838;
+  --viewport-muted: #7d8194;
+  --viewport-accent: #8fb08a;
 }
 
 html, body, #root {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--mono);
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font-family: var(--mono);
-  cursor: pointer;
+button, input {
+  font-family: var(--sans);
 }
 
-/* ── Top bar ───────────────────────────────────────── */
-.topbar {
+/* ── App shell ─────────────────────────────────────── */
+.app {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+  height: 100%;
 }
 
-.logo {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: var(--accent);
-  text-shadow: 0 0 20px var(--accent-glow);
-}
-
-.topbar-meta {
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
-  animation: blink 2.4s ease-in-out infinite;
-}
-
-/* ── Drop zone ─────────────────────────────────────── */
-.dropbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  flex-shrink: 0;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.dropbar.active {
-  background: var(--accent-glow);
-  border-color: var(--accent);
-}
-
-.prompt {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--accent);
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.drop-label {
+.app-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  border-radius: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
   white-space: nowrap;
 }
 
-.drop-label.loaded {
-  color: var(--text);
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: default; border-color: var(--border); }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
 
-.browse-btn {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  background: transparent;
-  border: 1px solid var(--accent);
-  padding: 4px 14px;
-  transition: background 0.12s, color 0.12s;
+.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary:disabled { background: var(--surface-2); color: var(--muted); }
+
+.icon-btn { padding: 7px 10px; }
+
+.back-btn { align-self: flex-start; }
+
+/* ── Project header / commit compose ──────────────────── */
+.project-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.project-header-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.project-header-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.project-header-actions {
+  display: flex;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.browse-btn:hover {
-  background: var(--accent);
-  color: var(--bg);
+.commit-compose {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 16px;
+  flex-wrap: wrap;
+}
+
+.drop-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.drop-label.loaded { color: var(--text); }
+
+.file-size {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.commit-msg-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  outline: none;
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.commit-msg-input:focus { border-color: var(--accent); }
+
+.commit-error {
+  padding: 0 20px 16px;
+  font-size: 0.75rem;
+  color: var(--red);
+}
+
+/* ── Stat card ─────────────────────────────────────── */
+.stat-card {
+  margin: 0 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.stat-cols {
+  flex: 1;
+  display: flex;
+  padding: 14px 18px;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.stat-col-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-col-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stat-thumb {
+  width: 180px;
+  flex-shrink: 0;
+  background: var(--viewport-bg);
+  border: none;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-thumb:disabled { cursor: default; }
+
+.stat-thumb-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  color: var(--viewport-muted);
+}
+
+/* ── Commits card ──────────────────────────────────── */
+.commits-card-header {
+  padding: 16px 20px 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pull-history-link {
+  text-align: center;
+  padding: 14px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  cursor: default;
 }
 
 /* ── Viewport ──────────────────────────────────────── */
+.viewport-card {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
 .viewport {
   flex: 1;
   position: relative;
   overflow: hidden;
   min-height: 0;
 }
+
+.model-info {
+  width: 180px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  padding: 16px;
+}
+
+.model-info-title {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.model-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.model-info-row:last-child { border-bottom: none; }
+.model-info-row span:last-child { color: var(--text); font-family: var(--mono); font-size: 0.72rem; }
 
 /* ── Empty state ───────────────────────────────────── */
 .empty-state {
@@ -138,16 +292,16 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  background-color: var(--viewport-bg);
-  background-image: radial-gradient(circle, #ddd5f0 1px, transparent 1px);
-  background-size: 28px 28px;
+  gap: 20px;
+  background:
+    radial-gradient(circle, #1e2233 1px, transparent 1px) 0 0 / 28px 28px,
+    var(--viewport-bg);
 }
 
 .crosshair {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
 }
 
 .crosshair::before {
@@ -157,7 +311,7 @@ button {
   left: 0;
   right: 0;
   height: 1px;
-  background: #c4b8e8;
+  background: var(--viewport-border);
 }
 
 .crosshair::after {
@@ -167,7 +321,7 @@ button {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #c4b8e8;
+  background: var(--viewport-border);
 }
 
 .origin {
@@ -178,27 +332,58 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7c3aed;
-  box-shadow: 0 0 8px #7c3aed66;
+  background: var(--viewport-accent);
+  box-shadow: 0 0 8px var(--viewport-accent);
 }
 
 .axis-x, .axis-y {
   position: absolute;
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  color: #9b8bbf;
+  color: var(--viewport-muted);
 }
 
 .axis-x { top: 50%; right: -18px; transform: translateY(-50%); }
 .axis-y { left: 50%; top: -16px; transform: translateX(-50%); }
 
 .empty-hint {
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  color: #9b8bbf;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--viewport-muted);
 }
+
+/* ── Mesh loading spinner ──────────────────────────── */
+.mesh-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--viewport-bg);
+  color: var(--viewport-accent);
+}
+
+.mesh-loader-spin {
+  transform-origin: 50px 58px;
+  animation: mesh-spin 1.6s linear infinite;
+}
+
+.mesh-loader-spin circle {
+  animation: mesh-pulse 1.4s ease-in-out infinite;
+}
+
+.mesh-loader-spin circle:nth-of-type(2) { animation-delay: 0.18s; }
+.mesh-loader-spin circle:nth-of-type(3) { animation-delay: 0.36s; }
+
+.mesh-loader-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--viewport-muted);
+}
+
+@keyframes mesh-spin { to { transform: rotate(360deg); } }
+@keyframes mesh-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
 /* ── Login screen ──────────────────────────────────── */
 .login-screen {
@@ -206,9 +391,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg);
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background:
+    radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0 / 28px 28px,
+    var(--bg);
 }
 
 .login-card {
@@ -219,22 +404,20 @@ button {
   padding: 48px 56px;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
 .login-logo {
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
   color: var(--text);
 }
 
-.login-logo-accent {
-  color: var(--accent);
-}
-
 .login-tagline {
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: 0.8rem;
   color: var(--muted);
   margin-bottom: 8px;
 }
@@ -244,41 +427,21 @@ button {
   align-items: center;
   gap: 10px;
   padding: 10px 22px;
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
   background: var(--accent);
+  border-radius: 7px;
   border: none;
   text-decoration: none;
   transition: opacity 0.15s;
 }
 
-.github-btn:hover { opacity: 0.85; }
+.github-btn:hover { opacity: 0.88; }
 
-/* ── App shell ─────────────────────────────────────── */
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.app-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.app-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-/* ── Sidebar ───────────────────────────────────────── */
-.sidebar {
-  width: 220px;
+/* ── Nav rail (logo, workspace, nav, projects, user) ──── */
+.nav-rail {
+  width: 250px;
   flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -287,44 +450,107 @@ button {
   overflow: hidden;
 }
 
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--clay));
+  flex-shrink: 0;
+}
+
+.workspace-pill {
+  margin: 0 12px 12px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.nav-list {
+  padding: 0 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: default;
+}
+
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.nav-item-icon {
+  width: 18px;
+  text-align: center;
+  color: var(--accent);
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
+  padding: 10px 16px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
 }
 
 .sidebar-new-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  width: 22px;
+  height: 22px;
+  font-size: 0.9rem;
   line-height: 1;
-  padding: 0 2px;
   cursor: pointer;
 }
 
+.sidebar-new-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 .new-project-form {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .new-project-input {
   background: var(--bg);
   border: 1px solid var(--border);
+  border-radius: 6px;
   color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 5px 8px;
+  font-size: 0.8rem;
+  padding: 6px 10px;
   outline: none;
   width: 100%;
 }
@@ -341,22 +567,22 @@ button {
   background: none;
   border: 1px solid var(--accent);
   color: var(--accent);
-  font-family: var(--mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  padding: 4px 0;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 5px 0;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
 
-.sidebar-action-btn:hover { background: var(--accent); color: var(--bg); }
+.sidebar-action-btn:hover { background: var(--accent); color: white; }
 .sidebar-action-btn.muted { border-color: var(--border); color: var(--muted); }
 .sidebar-action-btn.muted:hover { background: var(--border); color: var(--text); }
 
 .sidebar-error {
-  padding: 8px 12px;
-  font-size: 0.68rem;
-  color: #f87171;
+  padding: 8px 14px;
+  font-size: 0.72rem;
+  color: var(--red);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -365,20 +591,22 @@ button {
   list-style: none;
   overflow-y: auto;
   flex: 1;
+  padding: 0 6px;
 }
 
 .project-item {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.project-item:hover { background: var(--accent-glow); }
-.project-item.active { background: var(--accent-glow); border-left: 2px solid var(--accent); padding-left: 12px; }
+.project-item:hover { background: var(--surface-2); }
+.project-item.active { background: var(--accent-soft); border: 1px solid var(--accent); }
 
 .project-name {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
+  font-weight: 500;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -390,14 +618,13 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   color: var(--muted);
 }
 
 .gh-link {
   color: var(--accent);
   text-decoration: none;
-  letter-spacing: 0.06em;
 }
 
 .gh-link:hover { text-decoration: underline; }
@@ -406,11 +633,9 @@ button {
   background: none;
   border: none;
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   padding: 0;
   cursor: pointer;
-  letter-spacing: 0.06em;
   transition: color 0.12s;
 }
 
@@ -419,50 +644,124 @@ button {
 
 .project-empty {
   padding: 16px 14px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.user-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.user-footer .logout-link { margin-left: auto; }
+
+.logout-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: var(--sans);
+  padding: 0;
+}
+
+.logout-link:hover { color: var(--text); }
+
+/* ── Commit timeline ───────────────────────────────── */
+.commit-rail {
+  list-style: none;
+  position: relative;
+  padding: 4px 0;
+}
+
+.commit-rail::before {
+  content: '';
+  position: absolute;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.commit-day-heading {
+  position: relative;
+  padding: 12px 20px 6px 44px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.commit-item {
+  position: relative;
+  padding: 10px 20px 10px 44px;
+}
+
+.commit-dot {
+  position: absolute;
+  left: 28px;
+  top: 16px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+
+.commit-body { min-width: 0; flex: 1; }
+
+.commit-hash {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.commit-message {
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.commit-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.68rem;
   color: var(--muted);
-  font-style: italic;
 }
 
-/* ── Commit controls in dropbar ────────────────────── */
-.commit-msg-input {
-  background: var(--bg);
+.commit-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  outline: none;
-  width: 220px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.commit-msg-input:focus { border-color: var(--accent); }
-
-.commit-btn { margin-left: 4px; }
-
-.commit-error {
-  padding: 6px 20px;
-  font-size: 0.7rem;
-  color: #f87171;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-/* ── Animations ────────────────────────────────────── */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
-
-@keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.cursor {
-  color: var(--accent);
-  animation: cursor-blink 0.8s step-end infinite;
-  margin-left: 1px;
+.branch-badge {
+  margin-left: auto;
+  background: var(--clay-soft);
+  color: var(--clay-text);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 600;
 }

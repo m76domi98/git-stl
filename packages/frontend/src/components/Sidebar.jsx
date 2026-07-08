@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 
-export default function Projects({ token, selectedProject, onSelect, onCommitCreated }) {
+const NAV_ITEMS = [
+  { key: 'projects', label: 'Projects', icon: '▦', active: true },
+  { key: 'branches', label: 'Branches', icon: '⑂' },
+  { key: 'commits', label: 'Commits', icon: '◎' },
+  { key: 'prs', label: 'Pull Requests', icon: '⇄' },
+  { key: 'settings', label: 'Settings', icon: '⚙' },
+]
+
+export default function Sidebar({ token, user, logout, selectedProject, onSelect }) {
   const [projects, setProjects] = useState([])
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
@@ -63,9 +71,24 @@ export default function Projects({ token, selectedProject, onSelect, onCommitCre
   }
 
   return (
-    <aside className="sidebar">
+    <aside className="nav-rail">
+      <div className="nav-logo"><span className="logo-mark" />MeshGit</div>
+
+      <div className="workspace-pill">
+        <span>@{user.githubUsername}</span>
+      </div>
+
+      <nav className="nav-list">
+        {NAV_ITEMS.map((item) => (
+          <div key={item.key} className={`nav-item${item.active ? ' active' : ''}`}>
+            <span className="nav-item-icon">{item.icon}</span>
+            {item.label}
+          </div>
+        ))}
+      </nav>
+
       <div className="sidebar-header">
-        <span>PROJECTS</span>
+        <span>Projects</span>
         <button className="sidebar-new-btn" onClick={() => { setCreating(true); setError(null) }}>+</button>
       </div>
 
@@ -123,6 +146,12 @@ export default function Projects({ token, selectedProject, onSelect, onCommitCre
           <li className="project-empty">no projects yet</li>
         )}
       </ul>
+
+      <div className="user-footer">
+        <span className="commit-avatar">{user.githubUsername?.[0]?.toUpperCase()}</span>
+        <span>{user.githubUsername}</span>
+        <button className="logout-link" onClick={logout}>Log out</button>
+      </div>
     </aside>
   )
 }

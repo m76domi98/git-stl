@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-06-28 (GitHub integration + docker-compose fix)
+Last updated: 2026-07-05 (outstanding items reviewed; file size shown in dropbar)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -140,10 +140,11 @@ Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in 
 - [x] `docker-compose.yml`: added `GITHUB_TOKEN_ENCRYPTION_KEY` to backend env block (was missing — would crash on startup)
 - [x] `.gitignore`: added `package-lock.json` and `uploads/`
 
-### Weeks 3–4: Commit Graph + Version History
-- [ ] `GET /api/commits/history` — return full commit graph for a project (parent chain → DAG)
-- [ ] `GET /api/projects/:id` — include latest commit + branch tip
-- [ ] Frontend: commit timeline / history panel
+### Weeks 3–4: Commit Graph + Version History ✓
+- [x] Commit graph: no separate `/history` endpoint added — `GET /api/commits?project_id=` already returns the full parent-chain data (`id`, `parent_id`, `message`, `created_at`, vertex/face/file_size) needed to reconstruct history, so the old `501` stub was deleted rather than duplicating the query
+- [x] Frontend: `CommitHistory.jsx` panel (right sidebar) lists commits for the selected project, newest first; refetches when a new commit is pushed
+- [ ] `GET /api/projects/:id` latest-commit/branch-tip field — skipped, no consumer needs it yet (the history panel's own fetch already shows the latest commit as its first item); revisit alongside branching (Weeks 7–8)
+- Verified end-to-end via API: created a project, pushed two commits, confirmed `GET /api/commits?project_id=` returns correct `parent_id` chaining and matches what the panel renders. Added `packages/frontend/src/lib/format.js` (`formatBytes`) shared by the dropbar file-size label and the history panel.
 
 ### Weeks 5–6: Visual Diffing
 - [ ] Geometry service `/diff` endpoint — returns added/removed vertex sets
@@ -170,9 +171,10 @@ Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in 
 ---
 
 ## Known Outstanding Items
-- Garbage STL with `.stl` extension but 0 faces now returns 422 — but trimesh is lenient with malformed binary STLs that have valid headers; further fuzz testing may reveal edge cases
-- No file size shown in the viewer yet (good UX addition once frontend project/commit UI is built)
-- Business route routers have stub handlers; `authenticate` is at mount point but individual handlers are not yet auth-aware for ownership checks beyond projects
+- Reviewed 2026-07-05, all three prior items resolved or stale:
+  - File size now shown next to the filename in the dropbar (client-side `File.size`, no backend change)
+  - Ownership checks confirmed present everywhere data exists: `projects.js`, `commits.js`, `github.js` all filter by `owner_id`. `diff.js`/`merge.js` are still 501 stubs with no data to guard — revisit when those are implemented (Weeks 5–6, 9–10)
+  - 0-face STL rejection already works (`main.py` lines 22–25); no known fuzz failure, just a speculative "test more" note — no action taken
 
 ## Environment
 - Run: `docker compose up` from repo root

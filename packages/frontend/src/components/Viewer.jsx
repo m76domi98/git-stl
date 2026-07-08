@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import MeshLoader from './MeshLoader.jsx'
 
 function EmptyState() {
   return (
@@ -16,18 +17,20 @@ function EmptyState() {
   )
 }
 
-export default function Viewer({ file }) {
+export default function Viewer({ file, onLoad }) {
   const mountRef = useRef(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!file) return
+    setLoading(true)
 
     const mount = mountRef.current
     const width = mount.clientWidth
     const height = mount.clientHeight
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf2ecfa)
+    scene.background = new THREE.Color(0x0a0c14)
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000)
 
@@ -36,11 +39,11 @@ export default function Viewer({ file }) {
     renderer.setSize(width, height)
     mount.appendChild(renderer.domElement)
 
-    scene.add(new THREE.AmbientLight(0xddd0f5, 0.9))
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0)
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7))
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.1)
     dirLight.position.set(5, 10, 7)
     scene.add(dirLight)
-    const fillLight = new THREE.DirectionalLight(0xc4a8f0, 0.5)
+    const fillLight = new THREE.DirectionalLight(0x8890a8, 0.5)
     fillLight.position.set(-5, -3, -5)
     scene.add(fillLight)
 
@@ -55,17 +58,19 @@ export default function Viewer({ file }) {
       geometry = new STLLoader().parse(e.target.result)
       geometry.computeVertexNormals()
 
+      const vertexCount = geometry.attributes.position.count
+      onLoad?.({ vertices: vertexCount, faces: Math.round(vertexCount / 3) })
+
       const material = new THREE.MeshPhongMaterial({
-        color: 0x9b8bbf,
-        specular: 0xfaf6ff,
-        shininess: 50,
+        color: 0xd8dae0,
+        specular: 0x444444,
+        shininess: 35,
       })
       const mesh = new THREE.Mesh(geometry, material)
       scene.add(mesh)
 
-      // Slightly darker purple edges for definition
       edges = new THREE.EdgesGeometry(geometry, 15)
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x6b46c1, transparent: true, opacity: 0.5 })
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x3a3f52, transparent: true, opacity: 0.6 })
       const wireframe = new THREE.LineSegments(edges, lineMat)
       scene.add(wireframe)
 
@@ -82,6 +87,7 @@ export default function Viewer({ file }) {
       camera.updateProjectionMatrix()
       controls.target.copy(center)
       controls.update()
+      setLoading(false)
     }
     reader.readAsArrayBuffer(file)
 
@@ -110,10 +116,16 @@ export default function Viewer({ file }) {
       edges?.dispose()
       renderer.dispose()
       mount.removeChild(renderer.domElement)
+      onLoad?.(null)
     }
   }, [file])
 
   if (!file) return <EmptyState />
 
-  return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+      {loading && <MeshLoader />}
+    </div>
+  )
 }
