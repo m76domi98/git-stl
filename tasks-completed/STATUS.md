@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-07-05 (outstanding items reviewed; file size shown in dropbar)
+Last updated: 2026-07-23 (commit-aware 3D viewer: select a commit, view its model)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -30,14 +30,12 @@ It is written for an agent picking up this project cold.
 - `uploads_data` Docker volume mounted at `/app/uploads` in backend for STL file storage
 
 ### 2. STL Viewer (Frontend)
-- Three.js STL viewer with OrbitControls, EdgesGeometry (15° threshold)
-- Lilac design system: `--bg: #0e0b14`, `--accent: #c4a8f0`, `--viewport-bg: #f2ecfa`
-- JetBrains Mono throughout
-- Typing animation for MESHGIT title in topbar
-- Drag-and-drop STL file loading
-- Empty state: dot-grid with crosshair
-- Loaded state: mesh color `#9b8bbf`, edges `#6b46c1` at 0.5 opacity
+- Three.js STL viewer (`Viewer.jsx`) with OrbitControls, EdgesGeometry (15° threshold)
+- Drag-and-drop + file-picker STL loading; accepts a `File` or a `Blob` (used for both local uploads and server-fetched meshes)
+- Empty state: dot-grid with crosshair; loading state: `MeshLoader.jsx` rotating-wireframe spinner
 - Responsive canvas via ResizeObserver; full cleanup on unmount
+- Mesh/edges colors and viewport background are hardcoded in `Viewer.jsx` (not theme-driven) — see item 12 for why
+- Visual design system superseded — see item 12
 
 ### 3. GitHub OAuth — Web Flow
 - `passport-github2` strategy with `state: true` (CSRF protection)
@@ -93,8 +91,9 @@ commits (id UUID PK, project_id UUID FK projects.id,
 - `POST /api/projects` — create a project `{ name, description }`
 - `GET /api/projects` — list user's projects with `commit_count`
 - `GET /api/projects/:id` — single project detail
-- `POST /api/commits` — multipart upload: multer (50 MB limit, `.stl` only) → geometry `/clean` → `uploads_data` volume → DB transaction
-- `GET /api/commits?project_id=` — list commits with vertex/face/size stats; parent chain stored
+- `POST /api/commits` — multipart upload: multer (500 MB limit, `.stl` only) → geometry `/clean` → `uploads_data` volume → DB transaction
+- `GET /api/commits?project_id=` — list commits with vertex/face/size stats + author `github_username`; parent chain stored
+- `GET /api/commits/:id/file` — ownership-checked (joins `commits`→`projects` on `owner_id`), streams the cleaned STL binary via `readMesh()`; used by the dashboard thumbnail
 - Geometry service `/clean`: trimesh `process()` + `fill_holes` + `fix_winding` + `fix_normals`; rejects 0-face results; returns binary STL + `X-Vertex-Count` / `X-Face-Count` headers
 - File layout: `/app/uploads/<project_id>/<mesh_id>.stl`
 - multer 2.x (not 1.x — 1.x had known vulnerabilities)
@@ -129,8 +128,8 @@ Positioning: GitHub is the storage/visibility layer (repo appears on user's GitH
 - [x] OAuth scope: added `repo` to passport strategy; access token saved (encrypted) on login/upsert
 - [x] `POST /api/projects/:id/github` — creates GitHub repo via Octokit, stores owner+name, pushes latest commit if one exists
 - [x] Commit mirroring: after `POST /api/commits`, pushes STL to GitHub via Git Data API (blob → tree → commit → ref update), fire-and-forget so it doesn't block the response
-- [x] Frontend: projects sidebar (create, list, select), "Connect to GitHub" / GitHub link per project
-- [x] Frontend: project-aware dropbar — when project selected, shows commit message input + "COMMIT → [project]" button
+- [x] Frontend: project list (create, list, select), "Connect to GitHub" / GitHub link per project — now lives in `Sidebar.jsx` (see item 12; originally `Projects.jsx`)
+- [x] Frontend: project-aware commit compose — when a file is staged, shows message input + "New Commit" button — now in `Dashboard.jsx` (see item 12; originally a "dropbar" in `App.jsx`)
 - [x] New env var: `GITHUB_TOKEN_ENCRYPTION_KEY` (64 hex chars / 32 bytes); generated and added to `.env`
 
 Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in `crypto` (AES-256-GCM) — no pgcrypto extension required.
@@ -142,9 +141,32 @@ Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in 
 
 ### Weeks 3–4: Commit Graph + Version History ✓
 - [x] Commit graph: no separate `/history` endpoint added — `GET /api/commits?project_id=` already returns the full parent-chain data (`id`, `parent_id`, `message`, `created_at`, vertex/face/file_size) needed to reconstruct history, so the old `501` stub was deleted rather than duplicating the query
-- [x] Frontend: `CommitHistory.jsx` panel (right sidebar) lists commits for the selected project, newest first; refetches when a new commit is pushed
-- [ ] `GET /api/projects/:id` latest-commit/branch-tip field — skipped, no consumer needs it yet (the history panel's own fetch already shows the latest commit as its first item); revisit alongside branching (Weeks 7–8)
-- Verified end-to-end via API: created a project, pushed two commits, confirmed `GET /api/commits?project_id=` returns correct `parent_id` chaining and matches what the panel renders. Added `packages/frontend/src/lib/format.js` (`formatBytes`) shared by the dropbar file-size label and the history panel.
+- [x] Frontend: commit timeline (now embedded directly in `Dashboard.jsx`'s "Recent Commits" card — originally a separate `CommitHistory.jsx` right-sidebar panel, folded in during the item-12 redesign so the dashboard matches the reference design)
+- [ ] `GET /api/projects/:id` latest-commit/branch-tip field — skipped, no consumer needs it yet (`App.jsx` fetches `commits` once and derives "last commit" client-side); revisit alongside branching (Weeks 7–8)
+- Verified end-to-end via API: created a project, pushed two commits, confirmed `GET /api/commits?project_id=` returns correct `parent_id` chaining. Added `packages/frontend/src/lib/format.js` (`formatBytes`, `relativeTime`, `dayLabel`) shared across the dashboard and viewer.
+
+### 12. Dashboard UI Redesign + Earth-Tone Theme ✓
+Driven by a reference design (dashboard-first layout with a global nav rail) — see `frontend-plan.png` at repo root.
+
+- [x] `Sidebar.jsx` (replaces `Projects.jsx`): logo, workspace pill (`@githubUsername`), nav list — **Projects is the only functional item**; Branches / Commits / Pull Requests / Settings are rendered but disabled (`cursor: default`, no handler) since none of those are built yet — intentionally honest rather than dead links. Below the nav: the existing create/list/GitHub-connect project list, then a user footer with logout.
+- [x] `Dashboard.jsx` (new default view per selected project): header (title, "New Commit" / "Upload STL" / disabled Settings gear) → stat card (Branch: `main` static since branching isn't modeled yet, Commits count, Last Commit relative time, Contributors avatar) with a **live 3D thumbnail of the latest commit** next to it → "Recent Commits" timeline (connecting rail line, mono commit-hash, author avatar, relative time, `main` branch badge — badge is honest today since there's only one line of history)
+- [x] `ModelViewer.jsx` (new secondary screen): full 3D viewport + Model Info panel (vertices/faces/size/format), reached by clicking the dashboard thumbnail; "← Back to overview" returns. View switching is a plain `useState('dashboard' | 'viewer')` in `App.jsx` — no router dependency added
+- [x] `MeshLoader.jsx`: custom rotating-wireframe-triangle spinner (on-theme with the existing crosshair/vertex empty-state motif) instead of a generic spinner. Shown in `Viewer.jsx` during `FileReader`/`STLLoader` parsing and in `Dashboard.jsx` while fetching the latest commit's mesh over the network
+- [x] Palette: site chrome switched from violet/pink to a neutral earth-tone theme — `--bg #F4F6F0`, `--surface #FDFCF8`, `--accent #3B4A3F` (forest green), `--clay #D4A373` (terracotta, used for the branch badge)
+- [x] The 3D viewport/model area is deliberately **not** themed with the site palette: new fixed `--viewport-*` tokens (`--viewport-bg`, `--viewport-border`, `--viewport-muted`, `--viewport-accent`) keep the empty-state, loading spinner, and thumbnail background pinned dark regardless of site theme. `Viewer.jsx`'s actual Three.js mesh/edge/scene colors are hardcoded hex, untouched by either the layout or palette change — same for the future diff view's green/red/gray, which don't exist yet but were called out to preserve
+- [x] Backend: `GET /api/commits/:id/file` added (see item 8) so the dashboard thumbnail can show the real latest-commit mesh instead of only locally-staged uploads
+- [x] Upload limit raised 50 MB → 500 MB (`multer` `fileSize` limit in `commits.js` + matching error message in `index.js`) — some STL files are much larger than the original ceiling
+- Deleted: `Projects.jsx`, `CommitHistory.jsx` (superseded by `Sidebar.jsx` / folded into `Dashboard.jsx`)
+- Verified: `vite build` clean; API-level checks for `/api/commits/:id/file` (200 for owner, 404 for a different user) against the running Docker stack
+
+### 13. Commit-Aware 3D Viewer ✓
+Implements panel 2 ("3D Viewer – Single Model") of `frontend-plan.png`: pick any commit and view that commit's model.
+
+- [x] `ModelViewer.jsx`: commit `<select>` (native, styled with existing `commit-msg-input` class) next to the back button; selecting a commit fetches its STL via the existing `GET /api/commits/:id/file` and renders it. Model Info panel gains Commit / Author / When rows. An "Uncommitted upload" option appears only when the viewer was opened from a locally staged file
+- [x] `Dashboard.jsx`: Recent Commits rows are clickable → open the viewer at that commit; the stat-card thumbnail opens the viewer pinned to the latest commit (or the uncommitted upload if one is staged)
+- [x] `App.jsx`: passes `commits`, `token`, `initialCommitId` into `ModelViewer`; `key={viewerCommitId || 'local'}` resets viewer state per entry point. No new endpoints, no new deps, no router
+- Skipped (per plan panel 2, deferred to their roadmap weeks): branch dropdown (Weeks 7–8), View Changes / diff action (Weeks 5–6), Create Branch / Download STL actions
+- Verified: `vite build` clean
 
 ### Weeks 5–6: Visual Diffing
 - [ ] Geometry service `/diff` endpoint — returns added/removed vertex sets
@@ -172,9 +194,11 @@ Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in 
 
 ## Known Outstanding Items
 - Reviewed 2026-07-05, all three prior items resolved or stale:
-  - File size now shown next to the filename in the dropbar (client-side `File.size`, no backend change)
+  - File size now shown next to the filename (client-side `File.size`, no backend change)
   - Ownership checks confirmed present everywhere data exists: `projects.js`, `commits.js`, `github.js` all filter by `owner_id`. `diff.js`/`merge.js` are still 501 stubs with no data to guard — revisit when those are implemented (Weeks 5–6, 9–10)
   - 0-face STL rejection already works (`main.py` lines 22–25); no known fuzz failure, just a speculative "test more" note — no action taken
+- No collaborator/sharing model exists (raised 2026-07-08): every table is gated by `owner_id` only, so a project can't currently be shared with a second user. Would need a collaborators join table + role, and every `owner_id = X` check changed to "is owner or collaborator". Not scoped/started.
+- Nav rail's Branches / Commits / Pull Requests / Settings items (item 12) are intentionally inert — no backing routes or views. Wire them up as their respective roadmap weeks land, rather than building placeholder pages now.
 
 ## Environment
 - Run: `docker compose up` from repo root
