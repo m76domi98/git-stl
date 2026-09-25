@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-07-23 (commit-aware 3D viewer: select a commit, view its model)
+Last updated: 2026-09-25 (design notes for large-file storage + diffing added)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -173,6 +173,7 @@ Implements panel 2 ("3D Viewer – Single Model") of `frontend-plan.png`: pick a
 - [ ] `GET /api/diff?before=<commit>&after=<commit>` — backend proxies to geometry service
 - [ ] Frontend: Three.js overlay (green = added, red = removed, gray = unchanged)
 - [ ] Viewer needs to accept diff data alongside mesh data
+- Design notes written (not implemented): `LARGE_FILES_AND_DIFFING.md` at repo root covers the KD-tree nearest-neighbor diff algorithm, bounding-box/decimation/caching perf mitigations, and the related large-file storage plan (GitHub's `createBlob` mirror has no size guard today and fails silently past ~100MB — see that doc for the S3 + size-gated-mirror fix)
 
 ### Weeks 7–8: Branching
 - [ ] Branch model in DB (branch name → tip commit)
