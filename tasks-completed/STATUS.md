@@ -202,6 +202,7 @@ Implements panel 2 ("3D Viewer – Single Model") of `frontend-plan.png`: pick a
   - 0-face STL rejection already works (`main.py` lines 22–25); no known fuzz failure, just a speculative "test more" note — no action taken
 - No collaborator/sharing model exists (raised 2026-07-08): every table is gated by `owner_id` only, so a project can't currently be shared with a second user. Would need a collaborators join table + role, and every `owner_id = X` check changed to "is owner or collaborator". Not scoped/started.
 - Nav rail's Branches / Commits / Pull Requests / Settings items (item 12) are intentionally inert — no backing routes or views. Wire them up as their respective roadmap weeks land, rather than building placeholder pages now.
+- Raised 2026-09-27: `commits.test.js` calls `pool.end()` in its `finally` block. Harmless today as the only test file, but if a second `src/**/*.test.js` is added, check whether `node --test` is running files in-process or as separate worker processes — if in-process, a shared `pool.end()` here would break a sibling test's DB access. Not an issue yet; revisit when the next backend test file is added.
 
 ## Environment
 - Run: `docker compose up` from repo root
