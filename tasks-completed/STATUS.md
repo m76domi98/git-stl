@@ -1,6 +1,6 @@
 # MeshGit — Project Status
 
-Last updated: 2026-09-25 (design notes for large-file storage + diffing added)
+Last updated: 2026-09-27 (commit-graph concurrency hardening)
 
 This file is the source of truth for what has been built and what is next.
 It is written for an agent picking up this project cold.
@@ -144,6 +144,8 @@ Library: `@octokit/rest`. No Git LFS needed. Token encrypted with Node built-in 
 - [x] Frontend: commit timeline (now embedded directly in `Dashboard.jsx`'s "Recent Commits" card — originally a separate `CommitHistory.jsx` right-sidebar panel, folded in during the item-12 redesign so the dashboard matches the reference design)
 - [ ] `GET /api/projects/:id` latest-commit/branch-tip field — skipped, no consumer needs it yet (`App.jsx` fetches `commits` once and derives "last commit" client-side); revisit alongside branching (Weeks 7–8)
 - Verified end-to-end via API: created a project, pushed two commits, confirmed `GET /api/commits?project_id=` returns correct `parent_id` chaining. Added `packages/frontend/src/lib/format.js` (`formatBytes`, `relativeTime`, `dayLabel`) shared across the dashboard and viewer.
+- [x] Concurrency hardening: `commits_parent_unique` / `commits_root_unique` partial unique indexes (`migrate.js`) make Postgres itself reject a second concurrent child commit under the same parent, instead of silently forking the chain (previous parent-resolution was a plain `SELECT ... ORDER BY created_at DESC LIMIT 1` with no lock). `commits_project_created_idx` added for the list/parent-lookup queries. `POST /api/commits` catches the resulting `23505` and returns `409` instead of a generic 500
+- Verified: `packages/backend/src/routes/commits.test.js` (new — first test in the backend package; Node's built-in `node --test`, no new deps) fires two concurrent inserts sharing a parent against a live Postgres and asserts exactly one is rejected with `23505`. Migration applied clean against the existing dev DB (no pre-existing duplicate-parent rows to violate the new constraint)
 
 ### 12. Dashboard UI Redesign + Earth-Tone Theme ✓
 Driven by a reference design (dashboard-first layout with a global nav rail) — see `frontend-plan.png` at repo root.
