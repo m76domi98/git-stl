@@ -73,5 +73,21 @@ export async function migrate() {
     ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_repo_name TEXT;
   `)
 
+  // Enforce a single linear chain per project: at most one child per parent,
+  // and at most one root commit. Prevents concurrent POST /commits from
+  // silently forking history.
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS commits_parent_unique
+      ON commits (parent_id) WHERE parent_id IS NOT NULL;
+  `)
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS commits_root_unique
+      ON commits (project_id) WHERE parent_id IS NULL;
+  `)
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS commits_project_created_idx
+      ON commits (project_id, created_at DESC);
+  `)
+
   console.log('Database migrations applied')
 }

@@ -123,6 +123,9 @@ router.post('/', upload.single('file'), async (req, res, next) => {
       await client.query('COMMIT')
     } catch (err) {
       await client.query('ROLLBACK')
+      if (err.code === '23505') {
+        return res.status(409).json({ error: 'Commit created concurrently, retry' })
+      }
       throw err
     } finally {
       client.release()
