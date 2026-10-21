@@ -55,3 +55,6 @@ packages/frontend/src/context/AuthContext.jsx
 
 # Local MCP server config
 .mcp.json
+
+# Local MCP server config
+.mcp.json
