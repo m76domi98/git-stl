@@ -23,3 +23,9 @@ MeshGit aims to overcome these limitations by providing a dedicated solution for
 *   **Branching Workflow:** Create and manage branches for isolated experimentation without affecting the main design.
 *   **Conflict Identification & Assisted Resolution:** Visually identify overlapping geometry as conflict zones and provide tools for manual resolution (e.g., keep left/right, manual selection).
 *   **Robust Mesh Handling:** Automatic cleaning and repair of uploaded meshes to ensure stability for geometry operations.
+
+## Docs
+
+*   [Product requirements](docs/prd.md)
+*   [Large file storage and geometry diffing design notes](docs/large-files-and-diffing.md)
+*   [Design references](docs/design/)

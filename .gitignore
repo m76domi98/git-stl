@@ -49,3 +49,9 @@ packages/frontend/src/context/AuthContext.jsx
 .env.*
 *.pem
 *.key
+
+# Committed env template (no values)
+!.env.template
+
+# Local MCP server config
+.mcp.json
