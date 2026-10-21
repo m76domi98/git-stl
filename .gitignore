@@ -49,3 +49,6 @@ packages/frontend/src/context/AuthContext.jsx
 .env.*
 *.pem
 *.key
+
+# Committed env template (no values)
+!.env.template
