@@ -118,7 +118,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
       )
       commit = savedCommit
 
-      await storeMesh(project_id, meshId, cleanedBuffer)
+      await storeMesh(project.id, meshId, cleanedBuffer)
 
       await client.query('COMMIT')
     } catch (err) {
@@ -143,7 +143,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
           owner: project.github_repo_owner,
           repo: project.github_repo_name,
           meshId,
-          projectId: project_id,
+          projectId: project.id,
           message: message || '',
         }).catch((err) => console.error('[github-sync] push failed:', err.message))
       }
