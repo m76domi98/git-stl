@@ -56,7 +56,7 @@ export default function Viewer({ file, onLoad, full = false }) {
     controls.enableDamping = true
     controls.dampingFactor = 0.06
 
-    // ponytail: three's stock axes gizmo, not the plan's literal cube — swap if design insists
+    // NOTE: three's stock axes gizmo, not the plan's literal cube — swap if design insists
     let viewHelper, clock, onGizmoClick
     if (full) {
       renderer.autoClear = false

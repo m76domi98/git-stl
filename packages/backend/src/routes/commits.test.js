@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'crypto'
 import pool from '../db.js'
 
-// ponytail: integration test against a real Postgres (needs DATABASE_URL / docker-compose postgres up)
+// NOTE: integration test against a real Postgres (needs DATABASE_URL / docker-compose postgres up)
 // covers the commits_parent_unique / commits_root_unique indexes added in migrate.js
 test('concurrent commits sharing a parent: only one wins, the other gets 23505', async () => {
   const userId = randomUUID()

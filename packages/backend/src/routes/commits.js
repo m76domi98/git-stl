@@ -10,7 +10,7 @@ const router = Router()
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  // ponytail: 500MB in-memory buffer per upload; move to disk/streaming storage if concurrent large uploads start pressuring RAM
+  // NOTE: 500MB in-memory buffer per upload; move to disk/streaming storage if concurrent large uploads start pressuring RAM
   limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.originalname.toLowerCase().endsWith('.stl')) {
