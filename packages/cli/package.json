@@ -1,0 +1,15 @@
+{
+  "name": "meshgit-cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "meshgit": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "open": "^10.1.0"
+  }
+}
