@@ -1,0 +1,51 @@
+# JS
+node_modules/
+dist/
+.env
+.env.local
+.env.example
+package-lock.json
+
+# STL uploads (stored in Docker volume, not the repo)
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+CLAUDE.md
+.claude/settings.local.json
+
+# AI / agent tooling
+.claude/
+.agents/
+AGENTS.md
+tasks-completed/
+
+# Auth / OAuth / credential handling (kept local, not published)
+packages/backend/src/auth/
+packages/backend/src/middleware/authenticate.js
+packages/backend/src/routes/auth.js
+packages/backend/src/routes/github.js
+packages/backend/src/lib/githubSync.js
+packages/backend/src/lib/tokenCrypto.js
+packages/cli/src/commands/login.js
+packages/cli/src/config.js
+packages/frontend/src/components/Login.jsx
+packages/frontend/src/context/AuthContext.jsx
+
+# Secrets
+.env.*
+*.pem
+*.key
