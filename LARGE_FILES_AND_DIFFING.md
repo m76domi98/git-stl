@@ -31,7 +31,7 @@ A large mesh commits fine into MeshGit's own storage, then fails to mirror to Gi
 - `storeMesh(projectId, meshId, buffer)` → `s3.putObject({ Bucket, Key: '<project_id>/<mesh_id>.stl', Body: buffer })`
 - `readMesh(projectId, meshId)` → stream from S3, or better: issue a pre-signed URL and let the client fetch directly, bypassing the Node process for large transfers.
 - No schema change — `mesh_id` is already the pointer; it just resolves to an S3 key instead of a volume path.
-- Multer should move off `memoryStorage()` (full 500MB buffered in RAM per upload, flagged with a `ponytail:` comment in `commits.js`) once uploads route to S3 — stream-to-S3 instead of buffer-then-forward.
+- Multer should move off `memoryStorage()` (full 500MB buffered in RAM per upload, flagged with a `NOTE:` comment in `commits.js`) once uploads route to S3 — stream-to-S3 instead of buffer-then-forward.
 
 **GitHub mirror**: stop pretending every commit can go to GitHub.
 - Check size before calling `createBlob()`. Under the cap (leave headroom, e.g. 90MB): mirror as today.
