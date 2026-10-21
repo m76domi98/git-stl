@@ -11,5 +11,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "format": "pnpm -r --if-present format",
     "install:all": "pnpm install"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }
