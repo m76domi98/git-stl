@@ -52,3 +52,6 @@ packages/frontend/src/context/AuthContext.jsx
 
 # Committed env template (no values)
 !.env.template
+
+# Local MCP server config
+.mcp.json
