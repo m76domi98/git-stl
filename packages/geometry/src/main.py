@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from fastapi.responses import Response
-import trimesh
 import io
+
+import trimesh
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import Response
 
 app = FastAPI(title="MeshGit Geometry Service")
 
@@ -16,8 +17,8 @@ async def clean_mesh(file: UploadFile = File(...)):
     data = await file.read()
     try:
         mesh = trimesh.load(io.BytesIO(data), file_type="stl", force="mesh")
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=f"Invalid STL: {e}")
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid STL file") from None
 
     if not isinstance(mesh, trimesh.Trimesh):
         raise HTTPException(status_code=422, detail="STL must contain a single mesh")
