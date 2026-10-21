@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-meshgit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-meshgit}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meshgit} -d ${POSTGRES_DB:-meshgit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./packages/backend
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${BACKEND_PORT:-3001}:3001"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
+      GEOMETRY_SERVICE_URL: http://geometry:8000
+      PORT: 3001
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL:-http://localhost:3001/api/auth/github/callback}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      GITHUB_TOKEN_ENCRYPTION_KEY: ${GITHUB_TOKEN_ENCRYPTION_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3001}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/backend/src
+          target: /app/src
+
+  geometry:
+    build: ./packages/geometry
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      target: dev
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${FRONTEND_PORT:-5173}:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+      API_PROXY_TARGET: http://backend:3001
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/frontend/src
+          target: /app/src
+
+volumes:
+  postgres_data:
+  uploads_data:
