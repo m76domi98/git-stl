@@ -85,3 +85,15 @@ describe('parse', () => {
     }
   })
 })
+
+describe('errorHandler client errors', () => {
+  it('returns the 4xx status of middleware errors without logging', async () => {
+    const { app, log } = appThatThrows(
+      Object.assign(new Error('Unexpected token'), { status: 400 }),
+    )
+    const res = await request(app).get('/')
+    expect(res.status).toBe(400)
+    expect(res.body).toEqual({ success: false, error: 'Invalid request' })
+    expect(log).not.toHaveBeenCalled()
+  })
+})

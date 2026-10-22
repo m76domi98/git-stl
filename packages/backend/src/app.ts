@@ -9,6 +9,8 @@ import type { AuthModule } from './shared/auth/types.js'
 import { fail, ok } from './shared/http/envelope.js'
 import { errorHandler } from './shared/http/error-handler.js'
 
+const JSON_BODY_LIMIT = '100kb'
+
 export interface AppDeps {
   config: Pick<Config, 'frontendUrl'>
   auth: AuthModule
@@ -19,7 +21,7 @@ export interface AppDeps {
 export function createApp({ config, auth, db }: AppDeps): Express {
   const app = express()
   app.use(cors({ origin: config.frontendUrl, credentials: true }))
-  app.use(express.json())
+  app.use(express.json({ limit: JSON_BODY_LIMIT }))
 
   app.get('/api/health', (_req, res) => {
     res.json(ok({ status: 'ok' }))

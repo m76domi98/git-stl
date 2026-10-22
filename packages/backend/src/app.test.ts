@@ -38,3 +38,13 @@ describe('createApp', () => {
     expect(res.headers['access-control-allow-origin']).toBe('http://localhost:5173')
   })
 })
+
+describe('request bodies', () => {
+  it('answers malformed JSON with 400', async () => {
+    const res = await request(createApp({ config, auth: fakeAuth, db: pool }))
+      .post('/api/health')
+      .set('Content-Type', 'application/json')
+      .send('{"oops"')
+    expect(res.status).toBe(400)
+  })
+})
