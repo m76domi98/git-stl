@@ -241,65 +241,48 @@ Actions:
 
 # 8. Technical Architecture
 
-Frontend:
-React
-Three.js
+| Layer | Choice |
+| :--- | :--- |
+| Frontend | React + Three.js (Vite) |
+| Backend API | Node.js, Express, TypeScript, zod validation |
+| Geometry | Python microservice (FastAPI + trimesh) for cleaning, diffing, and boolean operations |
+| Database | PostgreSQL (metadata only) |
+| Mesh storage | Docker volume today; S3-compatible object storage planned, with binary delta compression considered once diffing exists |
 
-Backend:
-Node.js
-
-Geometry:
-Python microservice (leveraging libraries like Trimesh or PyMesh for robust mesh operations, cleaning, diffing, and boolean operations)
-
-Storage:
-PostgreSQL
-Object storage (with consideration for binary delta compression for efficiency)
+Geometry work never happens in the Node backend; it calls the geometry service over the internal network. See [architecture.md](architecture.md) for the full picture.
 
 ---
 
 # 9. Data Model
 
-Project
+Implemented:
 
-*   id
-*   owner
+*   **User**: id, github_id, github_username, avatar, email
+*   **Project**: id, owner_id, name, description, optional linked GitHub repo
+*   **Mesh**: id, file_size, vertex_count, face_count (bytes live in storage, keyed by project and mesh id, not in the database)
+*   **Commit**: id, project_id, parent_id, mesh_id, author_id, message, created_at. History is a single linear chain per project, enforced by unique indexes.
 
-Commit
+Planned:
 
-*   id
-*   parent_id
-*   mesh_id
-
-Mesh
-
-*   id
-*   vertices
-*   faces
-
-Delta
-
-*   id
-*   commit_before
-*   commit_after
-
-Conflict
-
-*   id
-*   region
+*   **Branch**: id, project_id, name, head_commit_id
+*   **Delta / Diff**: cached diff result per (commit_before, commit_after)
+*   **Conflict**: id, merge, region, resolution
 
 ---
 
 # 10. APIs
 
-POST /projects
+All JSON responses use the envelope `{ success, data, error }`.
 
-POST /commit
-
-GET /diff
-
-POST /merge (initiates merge process, may return conflicts)
-
-GET /history
+| Endpoint | Status |
+| :--- | :--- |
+| `POST /api/projects`, `GET /api/projects`, `GET /api/projects/:id` | Implemented |
+| `POST /api/commits` (upload STL, cleaned on the way in) | Implemented |
+| `GET /api/commits?project_id=` (history) | Implemented |
+| `GET /api/commits/:id/file` (download a version) | Implemented |
+| `GET /api/diff?before=&after=` | In progress |
+| `POST /api/merge` (initiates a merge, may return conflicts) | Planned |
+| Branch endpoints | Planned |
 
 ---
 
@@ -323,14 +306,16 @@ User:
 
 Given the complexity of robust 3D geometry operations, the MVP timeline has been revised to allow for more thorough development and testing of core features, particularly around conflict identification and manual resolution.
 
-| Week | Planned Scope | Notes |
-| :--- | :--- | :--- |
-| Week 1-2 | Upload + Render + Basic Mesh Cleaning | Focus on stable ingestion and display of STL files, including initial mesh integrity checks. |
-| Week 3-4 | Commit Graph + Version History | Implement core version tracking and display of commit history. |
-| Week 5-6 | Visual Diffing | Develop robust visual comparison of two mesh versions, highlighting additions, removals, and unchanged areas. |
-| Week 7-8 | Branching Support | Enable creation and switching between branches. |
-| Week 9-10 | Conflict Identification & Basic Merge | Implement detection of overlapping geometry as conflicts. For non-overlapping changes, attempt auto-merge. For conflicts, mark for manual resolution. |
-| Week 11-12 | Manual Conflict Resolution UI | Develop an interactive 3D interface for users to visually resolve identified conflicts (e.g., keep left/right, manual selection). |
+| Week | Planned Scope | Notes | Status |
+| :--- | :--- | :--- | :--- |
+| Week 1-2 | Upload + Render + Basic Mesh Cleaning | Focus on stable ingestion and display of STL files, including initial mesh integrity checks. | Done |
+| Week 3-4 | Commit Graph + Version History | Implement core version tracking and display of commit history. | Done (linear history) |
+| Week 5-6 | Visual Diffing | Develop robust visual comparison of two mesh versions, highlighting additions, removals, and unchanged areas. | In progress |
+| Week 7-8 | Branching Support | Enable creation and switching between branches. | Not started |
+| Week 9-10 | Conflict Identification & Basic Merge | Implement detection of overlapping geometry as conflicts. For non-overlapping changes, attempt auto-merge. For conflicts, mark for manual resolution. | Not started |
+| Week 11-12 | Manual Conflict Resolution UI | Develop an interactive 3D interface for users to visually resolve identified conflicts (e.g., keep left/right, manual selection). | Not started |
 
 Deliverable:
 Working browser application with STL versioning, visual diffing, branching, and interactive manual conflict resolution for 3D models.
+
+Progress and the engineering plan around these milestones are tracked in the [roadmap](roadmap.md).
