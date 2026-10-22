@@ -39,9 +39,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
-      - name: Migrate test database
-        working-directory: packages/backend
-        run: node -e "import('./src/db/migrate.js').then(async (m) => { await m.migrate(); (await import('./src/db.js')).default.end() })"
       - run: pnpm test
 
   geometry:
