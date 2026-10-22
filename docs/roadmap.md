@@ -45,7 +45,7 @@ Performance targets from the [PRD](prd.md): diff in under 5 s, conflict detectio
 
 ### 2. Design in Figma (next)
 
-The current screens were built from a static mockup (`docs/design/frontend-plan.png`). Before restructuring the frontend, design the screens properly so the rebuild has a target.
+The current screens were built from a rough static mockup. Before restructuring the frontend, design the screens properly so the rebuild has a target.
 
 - [ ] Figma file with design tokens from the current theme: `--bg #F4F6F0`, `--surface #FDFCF8`, `--accent #3B4A3F`, `--clay #D4A373`
 - [ ] Frames: Dashboard, Model viewer, Diff view, Branches, Merge / conflict resolution
