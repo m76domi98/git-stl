@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'crypto'
 import pool from '../db.js'
@@ -26,7 +26,7 @@ test('concurrent commits sharing a parent: only one wins, the other gets 23505',
   )
 
   try {
-    const insertChild = (meshId) =>
+    const insertChild = (meshId: string) =>
       pool.query(
         'INSERT INTO commits (project_id, parent_id, mesh_id, author_id) VALUES ($1, $2, $3, $4)',
         [projectId, rootId, meshId, userId]
@@ -38,7 +38,7 @@ test('concurrent commits sharing a parent: only one wins, the other gets 23505',
 
     assert.equal(fulfilled.length, 1, 'exactly one concurrent child commit should succeed')
     assert.equal(rejected.length, 1, 'exactly one concurrent child commit should be rejected')
-    assert.equal(rejected[0].reason.code, '23505', 'rejection should be a unique_violation')
+    assert.equal((rejected[0] as PromiseRejectedResult).reason.code, '23505', 'rejection should be a unique_violation')
   } finally {
     await pool.query('DELETE FROM commits WHERE project_id = $1', [projectId])
     await pool.query('DELETE FROM meshes WHERE id = ANY($1)', [[meshIdA, meshIdB]])
