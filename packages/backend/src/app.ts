@@ -8,6 +8,8 @@ import type { CommitEvents } from './features/commits/commit-events.js'
 import { createCommitsRepository } from './features/commits/commits.repository.js'
 import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
+import { diffRouter } from './features/diff/diff.routes.js'
+import { mergeRouter } from './features/merge/merge.routes.js'
 import { createProjectsRepository } from './features/projects/projects.repository.js'
 import { projectsRouter } from './features/projects/projects.routes.js'
 import { createProjectsService } from './features/projects/projects.service.js'
@@ -55,6 +57,8 @@ export function createApp(deps: AppDeps): Express {
 
   app.use('/api/projects', auth.authenticate, projectsRouter(createProjectsService(projectsRepo)))
   app.use('/api/commits', auth.authenticate, commitsRouter(commits))
+  app.use('/api/diff', auth.authenticate, diffRouter())
+  app.use('/api/merge', auth.authenticate, mergeRouter())
 
   app.use('/api', (_req, res) => {
     res.status(404).json(fail('Not found'))

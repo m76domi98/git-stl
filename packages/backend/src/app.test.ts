@@ -1,7 +1,7 @@
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
 import { testApp } from './test/test-app.js'
-import { fakeAuth } from './test/fake-auth.js'
+import { fakeAuth, TEST_USER_HEADER } from './test/fake-auth.js'
 
 describe('createApp', () => {
   it('serves the health check', async () => {
@@ -49,5 +49,14 @@ describe('hardening', () => {
     const res = await request(testApp()).get('/api/health')
     expect(res.headers['x-content-type-options']).toBe('nosniff')
     expect(res.headers['ratelimit-policy']).toBeDefined()
+  })
+})
+
+describe('unbuilt features', () => {
+  it('answer 501 behind auth', async () => {
+    const app = testApp()
+    expect((await request(app).get('/api/diff')).status).toBe(401)
+    expect((await request(app).get('/api/diff').set(TEST_USER_HEADER, 'u')).status).toBe(501)
+    expect((await request(app).post('/api/merge').set(TEST_USER_HEADER, 'u')).status).toBe(501)
   })
 })
