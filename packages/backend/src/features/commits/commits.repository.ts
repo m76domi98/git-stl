@@ -1,4 +1,4 @@
-import type { Pool } from 'pg'
+import type { Pool, PoolClient } from 'pg'
 import type { Commit, CommitSummary } from './commits.types.js'
 
 export interface NewCommit {
@@ -16,8 +16,8 @@ export interface MeshLocation {
 export interface CommitsRepository {
   listForProject(projectId: string): Promise<CommitSummary[]>
   findMeshOwned(commitId: string, ownerId: string): Promise<MeshLocation | null>
-  /** Inserts mesh + commit in one transaction; `persist` runs before COMMIT. */
-  create(input: NewCommit, persist: () => Promise<void>): Promise<Commit>
+  /** Inserts mesh + commit in one transaction, chained onto the latest commit. */
+  create(input: NewCommit): Promise<Commit>
 }
 
 /** Another commit claimed the same parent first (unique index violation). */
@@ -57,7 +57,7 @@ export function createCommitsRepository(db: Pool): CommitsRepository {
       return rows[0] ?? null
     },
 
-    async create({ projectId, authorId, message, mesh }, persist) {
+    async create({ projectId, authorId, message, mesh }) {
       const client = await db.connect()
       try {
         await client.query('BEGIN')
@@ -74,16 +74,24 @@ export function createCommitsRepository(db: Pool): CommitsRepository {
            VALUES ($1, $2, $3, $4, $5) RETURNING *`,
           [projectId, parents[0]?.id ?? null, mesh.id, authorId, message],
         )
-        await persist()
         await client.query('COMMIT')
+        client.release()
         return rows[0] as Commit
       } catch (err) {
-        await client.query('ROLLBACK')
+        await rollback(client)
         if ((err as { code?: string }).code === UNIQUE_VIOLATION) throw new ConcurrentCommitError()
         throw err
-      } finally {
-        client.release()
       }
     },
+  }
+}
+
+/** Rolls back and releases; a broken connection is discarded instead of reused. */
+async function rollback(client: PoolClient): Promise<void> {
+  try {
+    await client.query('ROLLBACK')
+    client.release()
+  } catch (err) {
+    client.release(err as Error)
   }
 }

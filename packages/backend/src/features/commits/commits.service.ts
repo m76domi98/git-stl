@@ -42,7 +42,12 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
     async readMesh(userId, commitId) {
       const location = await commits.findMeshOwned(commitId, userId)
       if (!location) throw notFound('Commit')
-      return storage.read(location.project_id, location.mesh_id)
+      try {
+        return await storage.read(location.project_id, location.mesh_id)
+      } catch (err) {
+        if ((err as { code?: string }).code === 'ENOENT') throw notFound('Mesh file')
+        throw err
+      }
     },
 
     async create(userId, { projectId, message, file }) {
@@ -56,13 +61,13 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
       }
 
       // Always key storage and rows by the DB's canonical project.id, never the raw request value.
+      // The file is written before the transaction so slow disk I/O never holds a DB connection.
+      await storage.store(project.id, mesh.id, cleaned.data)
       let commit
       try {
-        commit = await commits.create(
-          { projectId: project.id, authorId: userId, message, mesh },
-          () => storage.store(project.id, mesh.id, cleaned.data),
-        )
+        commit = await commits.create({ projectId: project.id, authorId: userId, message, mesh })
       } catch (err) {
+        await storage.remove(project.id, mesh.id)
         if (err instanceof ConcurrentCommitError)
           throw conflict('Commit created concurrently, retry')
         throw err
