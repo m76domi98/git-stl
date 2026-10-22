@@ -34,12 +34,8 @@ AGENTS.md
 tasks-completed/
 
 # Auth / OAuth / credential handling (kept local, not published)
-packages/backend/src/auth/
-packages/backend/src/middleware/authenticate.js
-packages/backend/src/routes/auth.js
-packages/backend/src/routes/github.js
-packages/backend/src/lib/githubSync.js
-packages/backend/src/lib/tokenCrypto.js
+packages/backend/src/features/auth/
+packages/backend/src/features/github/
 packages/cli/src/commands/login.js
 packages/cli/src/config.js
 packages/frontend/src/components/Login.jsx
