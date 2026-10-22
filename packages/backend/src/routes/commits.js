@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import multer from 'multer'
 import { randomUUID } from 'crypto'
-import pool from '../db.js'
+import pool from '../db/pool.js'
 import { storeMesh, readMesh } from '../storage.js'
 import { decrypt } from '../lib/tokenCrypto.js'
 import { pushCommitToGitHub } from '../lib/githubSync.js'

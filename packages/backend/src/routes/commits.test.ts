@@ -1,7 +1,7 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'crypto'
-import pool from '../db.js'
+import pool from '../db/pool.js'
 
 // NOTE: integration test against a real Postgres (needs DATABASE_URL / docker-compose postgres up)
 // covers the commits_parent_unique / commits_root_unique indexes added in migrate.js

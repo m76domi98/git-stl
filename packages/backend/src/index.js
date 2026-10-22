@@ -4,6 +4,7 @@ import cors from 'cors'
 import session from 'express-session'
 import passport from './auth/passport.js'
 import { migrate } from './db/migrate.js'
+import pool from './db/pool.js'
 import authRouter from './routes/auth.js'
 import projectsRouter from './routes/projects.js'
 import commitsRouter from './routes/commits.js'
@@ -51,6 +52,7 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: err.message })
 })
 
-migrate().then(() => {
+migrate(pool).then(() => {
+  console.log('Database migrations applied')
   app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))
 })
