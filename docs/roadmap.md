@@ -84,6 +84,6 @@ To be picked up alongside the phases above:
 - Uploads up to 500 MB are buffered in memory, and project ownership is checked only after the file is parsed. Stream to disk or object storage, and check ownership first.
 - `GET /api/commits` has no pagination.
 - Mesh storage is a Docker volume. Move it to S3-compatible storage (see the design notes).
-- GitHub mirroring silently skips meshes over GitHub's blob limit. Surface the skip to the user instead.
+- GitHub mirroring fails silently for meshes over GitHub's blob limit (about 100 MB). Check the size first and tell the user when a mesh is skipped.
 - CI runs tests but doesn't enforce the coverage threshold yet.
 - The Docker base image isn't pinned by digest.
