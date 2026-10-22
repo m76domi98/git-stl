@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import multer from 'multer'
 import { currentUserId } from '../../shared/auth/types.js'
 import { asyncRoute } from '../../shared/http/async-route.js'
@@ -8,6 +9,8 @@ import { MAX_UPLOAD_BYTES } from '../../shared/http/limits.js'
 import { parse } from '../../shared/http/validate.js'
 import type { CommitsService } from './commits.service.js'
 import { commitIdSchema, createCommitSchema, listCommitsSchema } from './commits.types.js'
+
+const UPLOAD_RATE_LIMIT = { windowMs: 60_000, limit: 10 }
 
 // NOTE: buffers the whole upload in memory; move to disk/streaming storage if
 // concurrent large uploads start pressuring RAM.
@@ -22,6 +25,13 @@ const upload = multer({
 
 export function commitsRouter(service: CommitsService): Router {
   const router = Router()
+  // Uploads are expensive (memory + mesh cleaning), so each user gets a small budget.
+  const uploadLimit = rateLimit({
+    ...UPLOAD_RATE_LIMIT,
+    keyGenerator: (req) => currentUserId(req),
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+  })
 
   router.get(
     '/',
@@ -42,6 +52,7 @@ export function commitsRouter(service: CommitsService): Router {
 
   router.post(
     '/',
+    uploadLimit,
     upload.single('file'),
     asyncRoute(async (req, res) => {
       const { project_id, message } = parse(createCommitSchema, req.body)

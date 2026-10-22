@@ -147,6 +147,23 @@ describe('POST /api/commits', () => {
   })
 })
 
+describe('upload rate limit', () => {
+  it('allows 10 uploads per user per minute', async () => {
+    const { app } = setup()
+    const projectId = await newProject(app, alice)
+
+    for (let i = 0; i < 10; i++) expect((await upload(app, alice, projectId)).status).toBe(201)
+    const limited = await upload(app, alice, projectId)
+    const otherUser = await request(app)
+      .post('/api/commits')
+      .set(as(bob))
+      .field('project_id', projectId)
+
+    expect(limited.status).toBe(429)
+    expect(otherUser.status).not.toBe(429)
+  })
+})
+
 describe('GET /api/commits', () => {
   it('lists commits newest first with mesh stats and author', async () => {
     const { app } = setup()
