@@ -11,8 +11,12 @@ COPY packages/backend packages/backend
 RUN pnpm --filter backend build
 
 FROM base AS runtime
+# Production by default: config refuses AUTH_MODE=dev unless NODE_ENV is overridden.
+ENV NODE_ENV=production
 RUN pnpm install --frozen-lockfile --prod --filter backend
 COPY --from=build /repo/packages/backend/dist packages/backend/dist
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 WORKDIR /repo/packages/backend
+USER node
 EXPOSE 3001
 CMD ["node", "dist/server.js"]

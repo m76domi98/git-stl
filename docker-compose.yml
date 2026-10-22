@@ -26,6 +26,8 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
       GEOMETRY_SERVICE_URL: http://geometry:8000
+      # Local stack: development mode, ports bound to 127.0.0.1 unless BIND_ADDR says otherwise.
+      NODE_ENV: ${NODE_ENV:-development}
       AUTH_MODE: ${AUTH_MODE:-github}
       PORT: 3001
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
@@ -43,9 +45,8 @@ services:
       - uploads_data:/app/uploads
     develop:
       watch:
-        - action: sync
+        - action: rebuild
           path: ./packages/backend/src
-          target: /app/src
 
   geometry:
     build: ./packages/geometry
