@@ -22,7 +22,7 @@ export default function Sidebar({ token, user, logout, selectedProject, onSelect
 
   const load = useCallback(async () => {
     const r = await api('/api/projects')
-    if (r.ok) setProjects((await r.json()).data)
+    if (r.ok) setProjects((await r.json()).data ?? [])
   }, [api])
 
   useEffect(() => { load() }, [load])

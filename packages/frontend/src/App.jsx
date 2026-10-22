@@ -24,7 +24,7 @@ export default function App() {
     if (!selectedProject) return setCommits([])
     fetch(`/api/commits?project_id=${selectedProject.id}`, {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.ok ? r.json().then((body) => body.data) : []).then(setCommits)
+    }).then((r) => r.ok ? r.json().then((body) => body.data ?? []) : []).then(setCommits)
   }, [token, selectedProject, historyKey])
 
   const handleFile = (f) => {
