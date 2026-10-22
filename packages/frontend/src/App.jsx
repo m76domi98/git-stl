@@ -24,7 +24,7 @@ export default function App() {
     if (!selectedProject) return setCommits([])
     fetch(`/api/commits?project_id=${selectedProject.id}`, {
       headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.ok ? r.json() : []).then(setCommits)
+    }).then((r) => r.ok ? r.json().then((body) => body.data ?? []) : []).then(setCommits)
   }, [token, selectedProject, historyKey])
 
   const handleFile = (f) => {
@@ -61,7 +61,8 @@ export default function App() {
       setHistoryKey((k) => k + 1)
     } else {
       const body = await r.json().catch(() => ({}))
-      setCommitError(body.error || body.detail || 'Commit failed')
+      const reason = typeof body.details === 'string' ? `: ${body.details}` : ''
+      setCommitError(body.error ? `${body.error}${reason}` : 'Commit failed')
     }
   }
 

@@ -1,6 +1,6 @@
-import pool from '../db.js'
+import type { Pool } from 'pg'
 
-export async function migrate() {
+export async function migrate(pool: Pool): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,6 +88,4 @@ export async function migrate() {
     CREATE INDEX IF NOT EXISTS commits_project_created_idx
       ON commits (project_id, created_at DESC);
   `)
-
-  console.log('Database migrations applied')
 }
