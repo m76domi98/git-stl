@@ -54,3 +54,6 @@ packages/frontend/src/context/AuthContext.jsx
 
 # Local MCP server config
 .mcp.json
+
+# Test coverage reports
+coverage/
