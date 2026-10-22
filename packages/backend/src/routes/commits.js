@@ -86,7 +86,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     if (!cleanRes.ok) {
       const text = await cleanRes.text().catch(() => '')
       let detail = text
-      try { detail = JSON.parse(text).detail ?? text } catch {}
+      try { detail = JSON.parse(text).detail ?? text } catch { /* not JSON; keep raw text */ }
       return res.status(422).json({ error: 'Mesh cleaning failed', detail })
     }
 
