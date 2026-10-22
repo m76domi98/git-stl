@@ -48,3 +48,11 @@ describe('request bodies', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('hardening', () => {
+  it('sets security headers and rate limit headers', async () => {
+    const res = await request(createApp({ config, auth: fakeAuth, db: pool })).get('/api/health')
+    expect(res.headers['x-content-type-options']).toBe('nosniff')
+    expect(res.headers['ratelimit-policy']).toBeDefined()
+  })
+})

@@ -1,5 +1,7 @@
 import cors from 'cors'
 import express, { type Express } from 'express'
+import { rateLimit } from 'express-rate-limit'
+import helmet from 'helmet'
 import type { Pool } from 'pg'
 import type { Config } from './config.js'
 import { createProjectsRepository } from './features/projects/projects.repository.js'
@@ -10,6 +12,7 @@ import { fail, ok } from './shared/http/envelope.js'
 import { errorHandler } from './shared/http/error-handler.js'
 
 const JSON_BODY_LIMIT = '100kb'
+const RATE_LIMIT = { windowMs: 60_000, limit: 300 }
 
 export interface AppDeps {
   config: Pick<Config, 'frontendUrl'>
@@ -20,6 +23,8 @@ export interface AppDeps {
 /** Builds the Express app without listening, so tests can drive it directly. */
 export function createApp({ config, auth, db }: AppDeps): Express {
   const app = express()
+  app.use(helmet())
+  app.use('/api', rateLimit({ ...RATE_LIMIT, standardHeaders: 'draft-7', legacyHeaders: false }))
   app.use(cors({ origin: config.frontendUrl, credentials: true }))
   app.use(express.json({ limit: JSON_BODY_LIMIT }))
 
