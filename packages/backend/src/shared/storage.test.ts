@@ -27,6 +27,15 @@ describe('createMeshStorage', () => {
     expect((await storage.read(PROJECT, MESH)).toString()).toBe('solid cube')
   })
 
+  it('removes a mesh and tolerates removing it twice', async () => {
+    await storage.store(PROJECT, MESH, Buffer.from('x'))
+
+    await storage.remove(PROJECT, MESH)
+    await storage.remove(PROJECT, MESH)
+
+    expect(await readdir(join(dir, PROJECT))).toEqual([])
+  })
+
   it('never overwrites an existing mesh', async () => {
     await storage.store(PROJECT, MESH, Buffer.from('first'))
 

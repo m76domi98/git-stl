@@ -16,7 +16,7 @@ function service(commits: Partial<CommitsRepository>) {
     create: vi.fn(),
     findOwned: vi.fn(async () => project),
   }
-  const storage: MeshStorage = { store: vi.fn(), read: vi.fn() }
+  const storage: MeshStorage = { store: vi.fn(), read: vi.fn(), remove: vi.fn() }
   return createCommitsService({
     commits: commits as CommitsRepository,
     projects,

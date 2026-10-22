@@ -10,6 +10,7 @@ import { fakeAuth } from './fake-auth.js'
 const unusedStorage: MeshStorage = {
   store: () => Promise.reject(new Error('storage not configured in this test')),
   read: () => Promise.reject(new Error('storage not configured in this test')),
+  remove: () => Promise.reject(new Error('storage not configured in this test')),
 }
 
 export const fakeGeometry = (): GeometryClient => ({

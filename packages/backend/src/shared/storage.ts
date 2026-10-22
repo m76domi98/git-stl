@@ -1,9 +1,11 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export interface MeshStorage {
   store(projectId: string, meshId: string, data: Buffer): Promise<void>
   read(projectId: string, meshId: string): Promise<Buffer>
+  /** Deletes a mesh; succeeds if it is already gone. */
+  remove(projectId: string, meshId: string): Promise<void>
 }
 
 // Postgres returns UUIDs in this exact form; anything else must not reach a file path.
@@ -29,6 +31,9 @@ export function createMeshStorage(uploadsDir: string): MeshStorage {
     },
     async read(projectId, meshId) {
       return readFile(meshPath(projectId, meshId))
+    },
+    async remove(projectId, meshId) {
+      await rm(meshPath(projectId, meshId), { force: true })
     },
   }
 }
