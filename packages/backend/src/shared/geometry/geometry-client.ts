@@ -8,22 +8,25 @@ export interface CleanedMesh {
 
 export interface GeometryClient {
   /** Repairs an uploaded STL (non-manifold edges, holes) and returns the cleaned mesh. */
-  clean(file: Buffer, filename: string): Promise<CleanedMesh>
+  clean(file: Buffer): Promise<CleanedMesh>
 }
 
 const CLEAN_TIMEOUT_MS = 5 * 60 * 1000
+// The user's filename never leaves this service.
+const UPLOAD_NAME = 'upload.stl'
+const MAX_DETAIL_LENGTH = 200
 
 export function createGeometryClient(
   baseUrl: string,
   fetchImpl: typeof fetch = fetch,
 ): GeometryClient {
   return {
-    async clean(file, filename) {
+    async clean(file) {
       const form = new FormData()
       form.append(
         'file',
         new Blob([file as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }),
-        filename,
+        UPLOAD_NAME,
       )
 
       let res: Response
@@ -37,9 +40,8 @@ export function createGeometryClient(
         throw new AppError(502, 'Geometry service unavailable')
       }
 
-      if (!res.ok) {
-        throw new AppError(422, 'Mesh cleaning failed', await readDetail(res))
-      }
+      if (res.status >= 500) throw new AppError(502, 'Geometry service error')
+      if (!res.ok) throw new AppError(422, 'Mesh cleaning failed', await readDetail(res))
 
       return {
         data: Buffer.from(await res.arrayBuffer()),
@@ -50,13 +52,13 @@ export function createGeometryClient(
   }
 }
 
-async function readDetail(res: Response): Promise<string> {
-  const text = await res.text().catch(() => '')
+/** Forwards only a short string `detail` (the service's user-facing message). */
+async function readDetail(res: Response): Promise<string | undefined> {
   try {
-    const detail: unknown = JSON.parse(text).detail
-    return typeof detail === 'string' ? detail : text
+    const detail: unknown = (await res.json()).detail
+    return typeof detail === 'string' ? detail.slice(0, MAX_DETAIL_LENGTH) : undefined
   } catch {
-    return text
+    return undefined
   }
 }
 

@@ -52,7 +52,7 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
 
     async create(userId, { projectId, message, file }) {
       const project = await ownedProject(userId, projectId)
-      const cleaned = await geometry.clean(file.buffer, file.originalname)
+      const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),
         fileSize: cleaned.data.length,
