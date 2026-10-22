@@ -17,13 +17,16 @@ services:
       retries: 10
 
   backend:
-    build: ./packages/backend
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
     restart: unless-stopped
     ports:
       - "${BIND_ADDR:-127.0.0.1}:${BACKEND_PORT:-3001}:3001"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
       GEOMETRY_SERVICE_URL: http://geometry:8000
+      AUTH_MODE: ${AUTH_MODE:-github}
       PORT: 3001
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}

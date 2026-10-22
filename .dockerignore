@@ -1,0 +1,11 @@
+# Allow-list: only the backend image builds from the repo root.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+!packages/*/package.json
+!packages/backend/tsconfig*.json
+!packages/backend/src
+packages/backend/src/**/*.test.ts
+packages/backend/src/test
