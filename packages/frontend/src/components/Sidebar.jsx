@@ -22,7 +22,7 @@ export default function Sidebar({ token, user, logout, selectedProject, onSelect
 
   const load = useCallback(async () => {
     const r = await api('/api/projects')
-    if (r.ok) setProjects(await r.json())
+    if (r.ok) setProjects((await r.json()).data)
   }, [api])
 
   useEffect(() => { load() }, [load])
@@ -36,7 +36,7 @@ export default function Sidebar({ token, user, logout, selectedProject, onSelect
       body: JSON.stringify({ name: newName.trim() }),
     })
     if (r.ok) {
-      const p = await r.json()
+      const p = (await r.json()).data
       setProjects((prev) => [{ ...p, commit_count: 0 }, ...prev])
       setNewName('')
       setCreating(false)
