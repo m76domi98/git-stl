@@ -1,31 +1,95 @@
 # MeshGit
 
-## Visual Version Control for 3D Models
+Visual version control for 3D models.
 
-MeshGit is an innovative platform designed to bring the power of version control, traditionally used for source code, to 3D mesh files, specifically STL. It addresses the challenges of collaborating on 3D models by providing geometry-aware diffing, branching, and interactive conflict resolution, enabling designers and engineers to track changes, collaborate safely, and manage their 3D assets efficiently.
+MeshGit brings Git-style history to STL files. Instead of text diffs, it shows changes in 3D. You upload a model, commit new versions, see what was added or removed in the viewport, and eventually branch and merge models with help resolving overlapping edits.
 
-## Problem Solved
+> **Status:** early development. Upload, mesh cleaning, commit history, and the 3D viewer work. Visual diffing is in progress. Branching and merging are planned. See the [roadmap](docs/roadmap.md).
 
-Traditional version control systems like Git are ill-suited for binary 3D model files (e.g., STL) because:
+## Why
 
-*   **Binary Nature:** STL files are binary, making text-based diffs meaningless.
-*   **Unreadable Diffs:** Changes are impossible to interpret without specialized 3D visualization.
-*   **Complex Merges:** Merge conflicts are difficult to identify and resolve manually.
-*   **Inefficient Storage:** Entire files often need to be stored for each version, leading to large repositories.
+Git is a poor fit for STL files. The files are binary, diffs are unreadable, and merge conflicts can't be interpreted without seeing the geometry. Teams end up with `bracket_v3_final_FINAL.stl` and a group chat. MeshGit treats geometry as the thing being versioned.
 
-MeshGit aims to overcome these limitations by providing a dedicated solution for 3D model versioning.
+## Features
 
-## Key Features (MVP)
+| Feature | Status |
+| --- | --- |
+| STL upload with automatic mesh cleaning (non-manifold edges, holes) | Done |
+| Interactive 3D viewer and project dashboard | Done |
+| Linear commit history per project | Done |
+| Optional mirroring of commits to a GitHub repo | Done |
+| Visual diff (added / removed / unchanged geometry) | In progress |
+| Branching | Planned |
+| Conflict detection and auto-merge of non-overlapping edits | Planned |
+| Manual conflict resolution UI | Planned |
 
-*   **STL Upload & Rendering:** Seamless upload and interactive 3D rendering of STL files in the browser.
-*   **Commit Graph & History:** A visual history of all changes, allowing users to track versions and revert to previous states.
-*   **Geometry-Aware Visual Diffing:** Highlight additions, removals, and unchanged geometry between two versions using intuitive color coding.
-*   **Branching Workflow:** Create and manage branches for isolated experimentation without affecting the main design.
-*   **Conflict Identification & Assisted Resolution:** Visually identify overlapping geometry as conflict zones and provide tools for manual resolution (e.g., keep left/right, manual selection).
-*   **Robust Mesh Handling:** Automatic cleaning and repair of uploaded meshes to ensure stability for geometry operations.
+## Stack
+
+| Part | Tech |
+| --- | --- |
+| Frontend | React, Three.js, Vite (`packages/frontend`) |
+| API | Node.js, Express, TypeScript, zod (`packages/backend`) |
+| Geometry service | Python, FastAPI, trimesh (`packages/geometry`) |
+| Database | PostgreSQL |
+| Mesh storage | Docker volume today, S3-compatible object storage planned |
+| CLI | Node.js (`packages/cli`) |
+
+More detail is in [docs/architecture.md](docs/architecture.md).
+
+## Getting started
+
+You need Docker, Node 22, and pnpm 11.
+
+```bash
+pnpm install
+cp .env.template .env      # set POSTGRES_PASSWORD; AUTH_MODE=dev is the default
+docker compose up          # postgres, backend :3001, geometry, frontend :5173
+```
+
+`AUTH_MODE=dev` signs every request in as a single local user, so you can try the app without setting up GitHub OAuth. It is refused when `NODE_ENV=production` and is only meant for your own machine. All ports bind to `127.0.0.1` unless you change `BIND_ADDR`.
+
+Health check: `curl localhost:3001/api/health`
+
+> **Known gap:** the GitHub login screens aren't published. In a fresh clone the API and geometry service run with `AUTH_MODE=dev`, but the frontend doesn't build yet because it still imports those screens. Fixing this is part of the frontend restructure on the [roadmap](docs/roadmap.md).
+
+## Scripts
+
+Run from the repo root:
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Start the full stack with Docker Compose |
+| `pnpm lint` | ESLint across the repo |
+| `pnpm typecheck` | TypeScript checks for each package |
+| `pnpm test` | Tests for each package |
+| `pnpm build` | Build each package |
+| `pnpm --filter backend test:coverage` | Backend tests with coverage (80% threshold) |
+
+Backend tests run against a real Postgres database. Point `DATABASE_URL` at a throwaway database, because the test setup runs migrations against it:
+
+```bash
+DATABASE_URL=postgres://meshgit:<password>@localhost:5432/meshgit_test pnpm --filter backend test
+```
+
+The geometry service uses ruff (`ruff check .` in `packages/geometry`).
+
+CI runs lint, typecheck, and backend tests against Postgres, plus ruff, on every push and pull request.
+
+## Repo layout
+
+```
+packages/
+  backend/    Express API: features/<name>/{routes,service,repository}, shared/
+  frontend/   React app and Three.js viewer
+  geometry/   FastAPI service for mesh cleaning, diffing, merging
+  cli/        meshgit command line tool
+docs/         PRD, architecture, roadmap, design notes
+```
 
 ## Docs
 
-*   [Product requirements](docs/prd.md)
-*   [Large file storage and geometry diffing design notes](docs/large-files-and-diffing.md)
-*   [Design references](docs/design/)
+- [Roadmap](docs/roadmap.md): where the project is and where it's going
+- [Architecture](docs/architecture.md): how the pieces fit together
+- [Product requirements](docs/prd.md)
+- [Large files and diffing design notes](docs/large-files-and-diffing.md)
+- [Design references](docs/design/)

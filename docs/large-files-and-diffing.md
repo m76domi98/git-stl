@@ -11,16 +11,16 @@ Written for whoever picks these up next.
 ## 1. Large file storage
 
 ### Current state
-- Uploads accepted up to 500MB (`multer`, `packages/backend/src/routes/commits.js`).
-- Cleaned STL bytes are written to a **Docker volume** (`storage.js`), keyed by `<project_id>/<mesh_id>.stl`.
+- Uploads are accepted up to 500MB (`multer`, `packages/backend/src/features/commits/commits.routes.ts`), with a limit of 10 uploads per minute per user.
+- Cleaned STL bytes are written to a **Docker volume** (`packages/backend/src/shared/storage.ts`), keyed by `<project_id>/<mesh_id>.stl`. Ids must be canonical UUIDs, and files are write-once.
 - Postgres never stores geometry — the `meshes` table is `(id, file_size, vertex_count, face_count, created_at)`. Storage backend can change without touching the schema.
-- Every commit is also mirrored to the linked GitHub repo (`packages/backend/src/lib/githubSync.js`) via `octokit.git.createBlob()` — the raw bytes, base64-encoded, committed directly into the repo's git history.
+- If a project is linked to GitHub, each commit is also mirrored to that repo through the after-commit hook (`commit-events.ts`), via `octokit.git.createBlob()` — the raw bytes, base64-encoded, committed directly into the repo's git history.
 
 ### The actual problem
-`createBlob()` has no size guard. GitHub's Git Data API blob limit is ~100MB. The mirror call is fire-and-forget:
+`createBlob()` has no size guard. GitHub's Git Data API blob limit is ~100MB. The mirror runs as an after-commit listener, after the response has been sent, and the event bus only logs listener failures:
 
-```js
-pushCommitToGitHub({...}).catch((err) => console.error('[github-sync] push failed:', err.message))
+```ts
+.catch((err: unknown) => log('[commit-events] listener failed', err))
 ```
 
 A large mesh commits fine into MeshGit's own storage, then fails to mirror to GitHub — **silently**, logged server-side only. The user gets no signal their GitHub copy is out of sync.
@@ -28,14 +28,15 @@ A large mesh commits fine into MeshGit's own storage, then fails to mirror to Gi
 ### Target design
 
 **Storage backend**: replace the Docker volume with S3-compatible object storage.
-- `storeMesh(projectId, meshId, buffer)` → `s3.putObject({ Bucket, Key: '<project_id>/<mesh_id>.stl', Body: buffer })`
-- `readMesh(projectId, meshId)` → stream from S3, or better: issue a pre-signed URL and let the client fetch directly, bypassing the Node process for large transfers.
+- Add an S3 implementation of the existing `MeshStorage` interface (`store`, `read`, `remove`). The commits service already depends on the interface, not on the volume.
+- `store(projectId, meshId, data)` → `s3.putObject({ Bucket, Key: '<project_id>/<mesh_id>.stl', Body })`
+- `read(projectId, meshId)` → stream from S3, or better: issue a pre-signed URL and let the client fetch directly, bypassing the Node process for large transfers.
 - No schema change — `mesh_id` is already the pointer; it just resolves to an S3 key instead of a volume path.
-- Multer should move off `memoryStorage()` (full 500MB buffered in RAM per upload, flagged with a `NOTE:` comment in `commits.js`) once uploads route to S3 — stream-to-S3 instead of buffer-then-forward.
+- Multer should move off `memoryStorage()` (full 500MB buffered in RAM per upload, flagged with a `NOTE:` comment in `commits.routes.ts`) once uploads route to S3 — stream-to-S3 instead of buffer-then-forward. Check project ownership before accepting the upload body.
 
 **GitHub mirror**: stop pretending every commit can go to GitHub.
 - Check size before calling `createBlob()`. Under the cap (leave headroom, e.g. 90MB): mirror as today.
-- Over the cap: **skip and surface it** — return a status on the commit response (`github_sync: 'skipped_too_large'`) instead of swallowing the error in a `.catch`. The frontend should show this, not hide it.
+- Over the cap: **skip and surface it**. The mirror runs after the response is sent, so record the outcome on the commit (e.g. a `github_sync` column: `synced`, `skipped_too_large`, `failed`) and show it in the history view instead of only logging it.
 - If full-history-on-GitHub for large meshes actually becomes a requirement: implement real Git LFS — commit a pointer file (`oid` + `size`) via the same Git Data API calls, upload the real bytes to the repo's LFS storage via the LFS batch API. Don't build this speculatively; only do it if a real use case needs meshes >100MB to have GitHub history, not just a MeshGit copy.
 
 **Delta storage** (from the PRD, "planned," not started): storing a full STL per commit is wasteful once diffing exists — a commit that only moves a few vertices doesn't need a full duplicate copy. This depends on §2 being built first (you need vertex-level diffs before you can store just the delta). Not worth designing further until diff is real and its output shape is known.
@@ -51,7 +52,7 @@ A large mesh commits fine into MeshGit's own storage, then fails to mirror to Gi
 def diff_meshes(before_id: str, after_id: str):
     raise HTTPException(status_code=501, detail="Not implemented")
 ```
-`packages/backend/src/routes/diff.js` is a matching stub. Nothing calls it.
+`packages/backend/src/features/diff/diff.routes.ts` is a matching stub that returns 501. Nothing calls it. A first implementation (KD-tree classification plus a cached diff route) is in progress and not on `main` yet.
 
 ### Target design
 
