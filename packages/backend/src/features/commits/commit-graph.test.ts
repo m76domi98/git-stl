@@ -1,7 +1,7 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'crypto'
-import pool from '../db/pool.js'
+import pool from '../../db/pool.js'
 
 // NOTE: integration test against a real Postgres (needs DATABASE_URL / docker-compose postgres up)
 // covers the commits_parent_unique / commits_root_unique indexes added in migrate.js
@@ -12,24 +12,27 @@ test('concurrent commits sharing a parent: only one wins, the other gets 23505',
   const meshIdB = randomUUID()
   const rootId = randomUUID()
 
-  await pool.query(
-    'INSERT INTO users (id, github_id, github_username) VALUES ($1, $2, $3)',
-    [userId, `test-${userId}`, 'test-user']
-  )
+  await pool.query('INSERT INTO users (id, github_id, github_username) VALUES ($1, $2, $3)', [
+    userId,
+    `test-${userId}`,
+    'test-user',
+  ])
   await pool.query('INSERT INTO projects (id, owner_id, name) VALUES ($1, $2, $3)', [
-    projectId, userId, 'test-project',
+    projectId,
+    userId,
+    'test-project',
   ])
   await pool.query('INSERT INTO meshes (id) VALUES ($1), ($2)', [meshIdA, meshIdB])
   await pool.query(
     'INSERT INTO commits (id, project_id, parent_id, mesh_id, author_id) VALUES ($1, $2, NULL, $3, $4)',
-    [rootId, projectId, meshIdA, userId]
+    [rootId, projectId, meshIdA, userId],
   )
 
   try {
     const insertChild = (meshId: string) =>
       pool.query(
         'INSERT INTO commits (project_id, parent_id, mesh_id, author_id) VALUES ($1, $2, $3, $4)',
-        [projectId, rootId, meshId, userId]
+        [projectId, rootId, meshId, userId],
       )
 
     const results = await Promise.allSettled([insertChild(meshIdA), insertChild(meshIdB)])
@@ -38,7 +41,11 @@ test('concurrent commits sharing a parent: only one wins, the other gets 23505',
 
     assert.equal(fulfilled.length, 1, 'exactly one concurrent child commit should succeed')
     assert.equal(rejected.length, 1, 'exactly one concurrent child commit should be rejected')
-    assert.equal((rejected[0] as PromiseRejectedResult).reason.code, '23505', 'rejection should be a unique_violation')
+    assert.equal(
+      (rejected[0] as PromiseRejectedResult).reason.code,
+      '23505',
+      'rejection should be a unique_violation',
+    )
   } finally {
     await pool.query('DELETE FROM commits WHERE project_id = $1', [projectId])
     await pool.query('DELETE FROM meshes WHERE id = ANY($1)', [[meshIdA, meshIdB]])
