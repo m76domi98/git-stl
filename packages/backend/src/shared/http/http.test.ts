@@ -1,4 +1,5 @@
 import express from 'express'
+import multer from 'multer'
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
@@ -45,11 +46,18 @@ describe('errorHandler', () => {
     expect(res.body).toEqual({ success: false, error: 'Mesh cleaning failed', details: 'bad mesh' })
   })
 
-  it('maps multer size errors to 413', async () => {
-    const { app } = appThatThrows(Object.assign(new Error('too big'), { code: 'LIMIT_FILE_SIZE' }))
-    const res = await request(app).get('/')
-    expect(res.status).toBe(413)
-    expect(res.body.success).toBe(false)
+  it('maps multer size errors to 413 and other upload errors to 400', async () => {
+    const tooBig = await request(appThatThrows(new multer.MulterError('LIMIT_FILE_SIZE')).app).get(
+      '/',
+    )
+    const extraFile = await request(
+      appThatThrows(new multer.MulterError('LIMIT_FILE_COUNT')).app,
+    ).get('/')
+
+    expect(tooBig.status).toBe(413)
+    expect(tooBig.body.error).toBe('File too large (max 500 MB)')
+    expect(extraFile.status).toBe(400)
+    expect(extraFile.body).toEqual({ success: false, error: 'Invalid upload' })
   })
 
   it('hides unexpected error messages from the client and logs them', async () => {

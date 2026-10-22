@@ -13,7 +13,7 @@ import { commitIdSchema, createCommitSchema, listCommitsSchema } from './commits
 // concurrent large uploads start pressuring RAM.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1, fields: 5, parts: 6 },
   fileFilter: (_req, file, cb) => {
     if (file.originalname.toLowerCase().endsWith('.stl')) cb(null, true)
     else cb(badRequest('Only STL files are accepted'))

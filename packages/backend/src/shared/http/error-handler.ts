@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express'
+import multer from 'multer'
 import { fail } from './envelope.js'
 import { AppError } from './errors.js'
 import { MAX_UPLOAD_MB } from './limits.js'
@@ -11,8 +12,12 @@ export function errorHandler(log: Logger = console.error): ErrorRequestHandler {
       res.status(err.status).json(fail(err.message, err.details))
       return
     }
-    if (isMulterSizeError(err)) {
-      res.status(413).json(fail(`File too large (max ${MAX_UPLOAD_MB} MB)`))
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        res.status(413).json(fail(`File too large (max ${MAX_UPLOAD_MB} MB)`))
+      } else {
+        res.status(400).json(fail('Invalid upload'))
+      }
       return
     }
     const clientStatus = clientErrorStatus(err)
@@ -23,10 +28,6 @@ export function errorHandler(log: Logger = console.error): ErrorRequestHandler {
     log(`[ERROR] ${req.method} ${req.originalUrl}`, err)
     res.status(500).json(fail('Internal server error'))
   }
-}
-
-function isMulterSizeError(err: unknown): boolean {
-  return err instanceof Error && (err as Error & { code?: string }).code === 'LIMIT_FILE_SIZE'
 }
 
 // body-parser and similar middleware tag their errors with a 4xx status.
