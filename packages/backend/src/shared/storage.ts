@@ -24,7 +24,8 @@ export function createMeshStorage(uploadsDir: string): MeshStorage {
     async store(projectId, meshId, data) {
       const path = meshPath(projectId, meshId)
       await mkdir(join(uploadsDir, projectId), { recursive: true })
-      await writeFile(path, data)
+      // Meshes are immutable once committed; never overwrite one.
+      await writeFile(path, data, { flag: 'wx' })
     },
     async read(projectId, meshId) {
       return readFile(meshPath(projectId, meshId))

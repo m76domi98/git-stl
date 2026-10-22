@@ -27,6 +27,13 @@ describe('createMeshStorage', () => {
     expect((await storage.read(PROJECT, MESH)).toString()).toBe('solid cube')
   })
 
+  it('never overwrites an existing mesh', async () => {
+    await storage.store(PROJECT, MESH, Buffer.from('first'))
+
+    await expect(storage.store(PROJECT, MESH, Buffer.from('second'))).rejects.toThrow(/EEXIST/)
+    expect((await storage.read(PROJECT, MESH)).toString()).toBe('first')
+  })
+
   it('rejects ids that are not canonical lowercase UUIDs', async () => {
     const bad = ['../etc', `${PROJECT}/..`, PROJECT.toUpperCase(), '']
     for (const id of bad) {
