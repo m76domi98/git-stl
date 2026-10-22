@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: meshgit
+          POSTGRES_PASSWORD: meshgit
+          POSTGRES_DB: meshgit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U meshgit -d meshgit"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://meshgit:meshgit@localhost:5432/meshgit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Migrate test database
+        working-directory: packages/backend
+        run: node -e "import('./src/db/migrate.js').then(async (m) => { await m.migrate(); (await import('./src/db.js')).default.end() })"
+      - run: pnpm test
+
+  geometry:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/geometry
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
