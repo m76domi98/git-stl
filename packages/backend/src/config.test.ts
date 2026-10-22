@@ -26,12 +26,12 @@ describe('loadConfig', () => {
       FRONTEND_URL: 'https://meshgit.example',
       GEOMETRY_SERVICE_URL: 'http://localhost:8000',
       UPLOADS_DIR: '/tmp/uploads',
-      AUTH_MODE: 'dev',
+      AUTH_MODE: 'github',
     })
 
     expect(config.port).toBe(8080)
     expect(config.nodeEnv).toBe('production')
-    expect(config.authMode).toBe('dev')
+    expect(config.authMode).toBe('github')
     expect(config.uploadsDir).toBe('/tmp/uploads')
   })
 
@@ -45,6 +45,18 @@ describe('loadConfig', () => {
 
   it('rejects a non-numeric PORT', () => {
     expect(() => loadConfig({ ...base, PORT: 'abc' })).toThrow(/PORT/)
+  })
+
+  it('rejects dev auth in production', () => {
+    expect(() => loadConfig({ ...base, NODE_ENV: 'production', AUTH_MODE: 'dev' })).toThrow(
+      /AUTH_MODE/,
+    )
+  })
+
+  it('normalizes FRONTEND_URL to an origin', () => {
+    expect(loadConfig({ ...base, FRONTEND_URL: 'http://localhost:5173/' }).frontendUrl).toBe(
+      'http://localhost:5173',
+    )
   })
 
   it('returns a frozen object', () => {

@@ -1,15 +1,24 @@
 import { z } from 'zod'
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(3001),
-  DATABASE_URL: z.string().min(1),
-  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
-  GEOMETRY_SERVICE_URL: z.string().url().default('http://geometry:8000'),
-  UPLOADS_DIR: z.string().min(1).default('/app/uploads'),
-  // 'github' loads the local auth module; 'dev' uses the built-in stub (never in production).
-  AUTH_MODE: z.enum(['github', 'dev']).default('github'),
-})
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    PORT: z.coerce.number().int().positive().default(3001),
+    DATABASE_URL: z.string().min(1),
+    FRONTEND_URL: z
+      .string()
+      .url()
+      .default('http://localhost:5173')
+      .transform((u) => new URL(u).origin),
+    GEOMETRY_SERVICE_URL: z.string().url().default('http://geometry:8000'),
+    UPLOADS_DIR: z.string().min(1).default('/app/uploads'),
+    // 'github' loads the local auth module; 'dev' uses the built-in stub (never in production).
+    AUTH_MODE: z.enum(['github', 'dev']).default('github'),
+  })
+  .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
+    message: 'AUTH_MODE=dev is not allowed when NODE_ENV=production',
+    path: ['AUTH_MODE'],
+  })
 
 export interface Config {
   readonly nodeEnv: 'development' | 'test' | 'production'
