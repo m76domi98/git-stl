@@ -1,14 +1,11 @@
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
-import { createApp } from './app.js'
-import pool from './db/pool.js'
+import { testApp } from './test/test-app.js'
 import { fakeAuth } from './test/fake-auth.js'
-
-const config = { frontendUrl: 'http://localhost:5173' }
 
 describe('createApp', () => {
   it('serves the health check', async () => {
-    const res = await request(createApp({ config, auth: fakeAuth, db: pool })).get('/api/health')
+    const res = await request(testApp()).get('/api/health')
     expect(res.status).toBe(200)
     expect(res.body).toEqual({ success: true, data: { status: 'ok' } })
   })
@@ -19,29 +16,27 @@ describe('createApp', () => {
         res.send('pong'),
       ),
     )
-    const app = createApp({ config, auth: { ...fakeAuth, install }, db: pool })
+    const app = testApp({ auth: { ...fakeAuth, install } })
 
     expect(install).toHaveBeenCalledOnce()
     expect((await request(app).get('/api/auth/ping')).text).toBe('pong')
   })
 
   it('answers unknown api routes with a JSON 404', async () => {
-    const res = await request(createApp({ config, auth: fakeAuth, db: pool })).get('/api/nope')
+    const res = await request(testApp()).get('/api/nope')
     expect(res.status).toBe(404)
     expect(res.body).toEqual({ success: false, error: 'Not found' })
   })
 
   it('only allows the configured frontend origin', async () => {
-    const res = await request(createApp({ config, auth: fakeAuth, db: pool }))
-      .get('/api/health')
-      .set('Origin', 'http://localhost:5173')
+    const res = await request(testApp()).get('/api/health').set('Origin', 'http://localhost:5173')
     expect(res.headers['access-control-allow-origin']).toBe('http://localhost:5173')
   })
 })
 
 describe('request bodies', () => {
   it('answers malformed JSON with 400', async () => {
-    const res = await request(createApp({ config, auth: fakeAuth, db: pool }))
+    const res = await request(testApp())
       .post('/api/health')
       .set('Content-Type', 'application/json')
       .send('{"oops"')
@@ -51,7 +46,7 @@ describe('request bodies', () => {
 
 describe('hardening', () => {
   it('sets security headers and rate limit headers', async () => {
-    const res = await request(createApp({ config, auth: fakeAuth, db: pool })).get('/api/health')
+    const res = await request(testApp()).get('/api/health')
     expect(res.headers['x-content-type-options']).toBe('nosniff')
     expect(res.headers['ratelimit-policy']).toBeDefined()
   })

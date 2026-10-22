@@ -1,15 +1,11 @@
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { createApp } from '../../app.js'
 import pool from '../../db/pool.js'
-import { fakeAuth, TEST_USER_HEADER } from '../../test/fake-auth.js'
+import { TEST_USER_HEADER } from '../../test/fake-auth.js'
 import { createUser, deleteUsers } from '../../test/fixtures.js'
+import { testApp } from '../../test/test-app.js'
 
-const app = createApp({
-  config: { frontendUrl: 'http://localhost:5173' },
-  auth: fakeAuth,
-  db: pool,
-})
+const app = testApp()
 
 let alice: string
 let bob: string
