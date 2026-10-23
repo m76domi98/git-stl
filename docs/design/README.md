@@ -3,6 +3,7 @@
 Screens are designed in Figma first, then built from the same tokens. This folder holds the link to the Figma file and any exported references.
 
 - **Figma file:** [MeshGit](https://www.figma.com/design/r6RysycQdSts0aWMk6jEsK)
+- **Screens and requirements:** [screens.md](screens.md)
 
 The file has three pages:
 
