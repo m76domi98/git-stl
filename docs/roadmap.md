@@ -43,21 +43,21 @@ Performance targets from the [PRD](prd.md): diff in under 5 s, conflict detectio
 - [x] Pluggable auth (`AUTH_MODE`) and an after-commit hook for GitHub mirroring
 - [x] Docker image built from the lockfile, running as non-root
 
-### 2. Design in Figma (next)
+### 2. Design in Figma (done)
 
 The current screens were built from a rough static mockup. Before restructuring the frontend, design the screens properly so the rebuild has a target.
 
-- [ ] Figma file with design tokens from the current theme: `--bg #F4F6F0`, `--surface #FDFCF8`, `--accent #3B4A3F`, `--clay #D4A373`
-- [ ] Frames: Dashboard, Model viewer, Diff view, Branches, Merge / conflict resolution
-- [ ] Viewport colors defined separately from site tokens: added green, removed red, unchanged gray
-- [ ] `docs/design/README.md` with the Figma link and the frame list
+- [x] Figma file with design tokens (warm beige surfaces, dark olive nav, forest green accent)
+- [x] Frames: Dashboard, 3D viewer, visual diff, branch graph, merge / conflict, conflict resolution, merge result, commit history
+- [x] Viewport colors defined separately from site tokens: added green, removed red, unchanged gray
+- [x] `docs/design/README.md` with the Figma link and the frame list
 
-### 3. Frontend restructure
+### 3. Frontend restructure (next)
 
 - [ ] Shared typed API client (envelope-aware, auth header, consistent errors)
 - [ ] Feature folders (`projects`, `commits`, `viewer`, `dashboard`) with hooks that own data fetching
 - [ ] Convert to `.tsx`, with `tsc --noEmit` in CI
-- [ ] Split `index.css` into tokens, base styles, and per-feature styles mapped to the Figma tokens
+- [ ] Split `index.css` into tokens, base styles, and per-feature styles, and switch to the Figma palette
 - [ ] Auth seam like the backend's, so a fresh clone builds with a dev login
 - [ ] Vitest + React Testing Library, at 80% or better
 
