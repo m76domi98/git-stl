@@ -47,8 +47,8 @@ Performance targets from the [PRD](prd.md): diff in under 5 s, conflict detectio
 
 The current screens were built from a rough static mockup. Before restructuring the frontend, design the screens properly so the rebuild has a target.
 
-- [x] Figma file with design tokens from the current theme: `--bg #F4F6F0`, `--surface #FDFCF8`, `--accent #3B4A3F`, `--clay #D4A373`
-- [x] Frames: Dashboard, Model viewer, Diff view, Branches, Merge / conflict resolution
+- [x] Figma file with design tokens (warm beige surfaces, dark olive nav, forest green accent)
+- [x] Frames: Dashboard, 3D viewer, visual diff, branch graph, merge / conflict, conflict resolution, merge result, commit history
 - [x] Viewport colors defined separately from site tokens: added green, removed red, unchanged gray
 - [x] `docs/design/README.md` with the Figma link and the frame list
 
@@ -57,7 +57,7 @@ The current screens were built from a rough static mockup. Before restructuring 
 - [ ] Shared typed API client (envelope-aware, auth header, consistent errors)
 - [ ] Feature folders (`projects`, `commits`, `viewer`, `dashboard`) with hooks that own data fetching
 - [ ] Convert to `.tsx`, with `tsc --noEmit` in CI
-- [ ] Split `index.css` into tokens, base styles, and per-feature styles mapped to the Figma tokens
+- [ ] Split `index.css` into tokens, base styles, and per-feature styles, and switch to the Figma palette
 - [ ] Auth seam like the backend's, so a fresh clone builds with a dev login
 - [ ] Vitest + React Testing Library, at 80% or better
 
