@@ -14,7 +14,7 @@ The file has three pages:
 
 | # | Frame | Purpose |
 | --- | --- | --- |
-| 1 | Dashboard | Project overview: stats, latest model, recent commits |
+| 1 | Dashboard | Branch, contributors and mesh metadata on top; the latest `main` model fills the rest; recent activity across branches runs down the right |
 | 2 | 3D Viewer | One version in full: tool rail, viewport toolbar, model info, actions |
 | 3 | Visual Diff | Two versions overlaid, with added and removed geometry colored |
 | 4 | Branch Graph | Branch list, commit graph, and ahead/behind for each branch |
