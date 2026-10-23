@@ -30,6 +30,7 @@ CLAUDE.md
 # AI / agent tooling
 .claude/
 .agents/
+.codex/
 AGENTS.md
 tasks-completed/
 
