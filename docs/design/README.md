@@ -4,44 +4,63 @@ Screens are designed in Figma first, then built from the same tokens. This folde
 
 - **Figma file:** [MeshGit](https://www.figma.com/design/r6RysycQdSts0aWMk6jEsK)
 
-The file has two pages. **Screens** holds the five frames below. **Foundations** holds the color variables, text styles, and shared components (Button, NavItem, Sidebar, CommitRow, Avatar, BranchBadge, icons).
+The file has three pages:
 
-## Frames to design
+- **Screens** holds the eight frames below.
+- **Foundations** holds the color variables, text styles, icons, and shared components: Button, IconButton, Dropdown, NavItem, Sidebar, CommitRow, Badge, Avatar, InfoRow, LegendItem, ViewportToolbar, and AxisGizmo.
+- **Archive** keeps earlier drafts.
 
-| Frame | Purpose |
-| --- | --- |
-| Dashboard | Project overview: stats, live mesh thumbnail, recent commits |
-| Model viewer | Full-screen 3D view of one version |
-| Diff view | Two versions compared, with added / removed / unchanged geometry colored |
-| Branches | Branch list and switching, with each branch's head commit |
-| Merge / conflict | Conflict zones in the viewport; keep left, keep right, or manual selection |
+## Frames
+
+| # | Frame | Purpose |
+| --- | --- | --- |
+| 1 | Dashboard | Project overview: stats, latest model, recent commits |
+| 2 | 3D Viewer | One version in full: tool rail, viewport toolbar, model info, actions |
+| 3 | Visual Diff | Two versions overlaid, with added and removed geometry colored |
+| 4 | Branch Graph | Branch list, commit graph, and ahead/behind for each branch |
+| 5 | Merge / Conflict | Auto-merged regions and conflict regions marked on the model |
+| 6 | Conflict Resolution | Left and right close-ups, with keep left, keep right, or manual select |
+| 7 | Merge Result | Preview of the merged mesh, a summary, and the commit message |
+| 8 | Commit History | Commits grouped by day, filterable by branch and author |
 
 ## Tokens
 
-The site uses a neutral earth-tone palette, chosen over the usual violet/neon "tech" look:
+The palette is warm and neutral: beige surfaces, a dark olive nav rail, and forest green for primary actions. Type is Inter, Bold for headings and labels and Regular for body text.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` | `#F4F6F0` | Page background |
-| `--surface` | `#FDFCF8` | Cards, panels |
-| `--accent` | `#3B4A3F` | Primary actions, active nav (forest green) |
-| `--clay` | `#D4A373` | Secondary accent (terracotta) |
+| `bg` | `#F3EEE5` | Page background |
+| `surface` | `#FFFCF6` | Cards, panels |
+| `tan` | `#E9DFD0` | Soft buttons, selected rows |
+| `border` | `#E3D8C6` | Card and input borders |
+| `text` | `#30291F` | Primary text |
+| `muted` | `#766B5E` | Secondary text |
+| `accent` | `#40543B` | Primary actions (forest green) |
+| `sage` | `#8C9D76` | Success, auto-merged |
+| `clay` | `#C7B89F` | Timeline rail, neutral accents |
+| `danger` | `#C9584D` | Conflicts, high severity |
+| `sidebar/bg` | `#2F3428` | Nav rail |
+| `sidebar/active` | `#45573E` | Active nav item |
 
 ## Viewport colors
 
-The 3D viewport is deliberately independent of the site theme. Scene, mesh, edge, and grid colors are fixed values in the Three.js code, not CSS variables. Diff colors follow the same rule:
+The 3D viewport is deliberately independent of the site theme. Scene, mesh, edge, and grid colors are fixed values in the Three.js code, not CSS variables. Diff and merge colors follow the same rule.
 
-| Meaning | Color | On viewer `#F5F5F2` | On thumbnail `#0A0C14` |
-| --- | --- | --- | --- |
-| Added geometry | `#1F9D55` | 3.2:1 | 5.6:1 |
-| Removed geometry | `#D93F2B` | 4.1:1 | 4.4:1 |
-| Unchanged geometry | `#7C828C` | 3.5:1 | 5.1:1 |
-| Conflict zone | `#D4A373` | | |
+| Meaning | Color | On viewer `#E7DECF` |
+| --- | --- | --- |
+| Mesh | `#D8CCB6` | |
+| Added geometry | `#5E8A4B` | 3.0:1 |
+| Removed geometry | `#C9584D` | 3.2:1 |
+| Unchanged geometry | `#D8CCB6` (plain mesh) | |
+| Conflict | `#C9584D` | 3.2:1 |
+| Auto-merged | `#8C9D76` | |
+| Main side / feature side | `#40543B` / `#D9776B` | |
 
-Each diff color clears the 3:1 contrast minimum for graphics on both backgrounds. The green leans blue and the red leans orange, so the two stay distinguishable for most red-green color blindness.
+Added and removed both clear the 3:1 contrast minimum for graphics on the viewer background. Unchanged geometry keeps the plain mesh color, so only real changes stand out.
 
 ## Conventions
 
 - Unbuilt features stay visible in the nav but disabled. They don't link to placeholder pages.
 - Loading states use the on-theme wireframe triangle loader (`MeshLoader`), not a generic spinner.
 - The dashboard is the default view, and the full viewer is a secondary screen.
+- The model art in the frames is a vector placeholder. The app renders the real mesh with Three.js.
