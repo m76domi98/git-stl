@@ -9,9 +9,9 @@ The plan for each screen in the [Figma file](https://www.figma.com/design/r6Rysy
 The default view for a project. The latest model on `main` takes most of the page, so you see the current state of the design first.
 
 - Header with the project name, visibility, description, **New Commit**, **Upload STL**, and a menu.
-- A card with the branch picker, commit count, last commit time, and contributors, plus the mesh metadata for the latest commit (vertices, faces, size, format, units, watertight check).
-- The latest commit on the selected branch renders in a viewport with orbit, pan, zoom, and fit controls. **Open in Viewer** goes to screen 2.
-- A right column with recent commits across all branches, newest first. Each dot and badge uses its branch's color. It can be filtered by branch.
+- A project card: branch picker, commit count, last commit time, contributors, description, tags, and the mesh metadata for the latest commit (vertices, faces, size, format, mesh health).
+- In the same card, the latest commit on the selected branch renders on the dark stage. **Open in Viewer** goes to screen 2.
+- Recent commits underneath, newest first, each with its branch badge. **View all history** goes to screen 8.
 - Data: existing `GET /api/projects/:id`, `GET /api/commits?project_id=`, `GET /api/commits/:id/file`. New: branch list, contributors, mesh stats from the geometry service.
 - Done when the viewport loads the latest mesh in under 2 s for a 10 MB STL and the activity list matches the commit history.
 
@@ -22,9 +22,11 @@ The default view for a project. The latest model on `main` takes most of the pag
 One commit in full.
 
 - Header with the commit hash, message, author, and time, plus a branch picker, download, and a menu.
+- The model fills the screen on the dark stage. Everything else floats on glass panels.
 - A left tool rail (solid, layers, wireframe, measure, screenshot, settings) and a floating toolbar (orbit, pan, measure, zoom in and out, fit, fullscreen, screenshot).
+- Display settings: grid, edges, and normals toggles, lighting preset, and background color.
 - Model info: vertices, faces, size, format, and what the repair step fixed on upload.
-- Actions: **View Changes** (screen 3, compared with the parent commit), **Create Branch**, **Download STL**.
+- **View changes** goes to screen 3, compared with the parent commit. Download and more actions sit next to the branch picker.
 - A version list for switching to nearby commits without leaving the page.
 - Data: existing `GET /api/commits/:id/file`. New: mesh stats and the repair report stored with each commit.
 
