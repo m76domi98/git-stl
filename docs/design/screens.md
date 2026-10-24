@@ -93,8 +93,54 @@ One conflict at a time, side by side.
 - Paginated with **Load more**, not loaded all at once (the commit list currently has no pagination).
 - Data: existing `GET /api/commits?project_id=`, plus new `branch`, `author`, `q`, and cursor parameters.
 
+## 9. Landing Page
+
+![Landing Page](screens/9-landing.png)
+
+The public page people see before they sign in. It explains what MeshGit is and sends them to sign up.
+
+- A top nav with the logo, How it works, Features, Docs, **Sign in**, and **Get started**.
+- A hero with the headline, a short description, **Create free account** and **Sign in**, and a visual diff preview with the added / removed legend.
+- How it works in three steps: commit (repair on upload), compare (visual diff), merge (auto-merge plus marked conflicts).
+- A grid of six features: visual diff, branches, conflict resolution, mesh repair, history, and downloading any version.
+- A merge section using the merge view render, a dark call-to-action band, and a footer.
+- The model art comes from the diff and merge frames. The real page can use a looping render or a still image.
+- Done when the page works at phone width and every button goes to sign up or sign in.
+
+## 10. Sign In
+
+![Sign In](screens/10-sign-in.png)
+
+- The left half is the shared brand panel: logo, pitch, the diff illustration, and three selling points.
+- **Continue with GitHub**, then email and password, **Keep me signed in**, and **Forgot password?** (screen 12).
+- A **Create an account** link in the top right goes to screen 11.
+- Errors show under the field they belong to, using the TextField error state.
+
+## 11. Create Account
+
+![Create Account](screens/11-create-account.png)
+
+- **Sign up with GitHub**, or name, email, and password.
+- A four-step strength meter under the password field.
+- **Create account** stays disabled until the terms box is checked.
+- After sign up, the user lands on an empty dashboard with **Upload STL** as the first action.
+
+## 12. Reset Password
+
+![Reset Password](screens/12-reset-password.png)
+
+- **Back to sign in**, an email field, and **Send reset link**.
+- Shown with the error state. The same message shows whether or not the email has an account, so the form can't be used to check who's signed up.
+
+## 13. Check Your Email
+
+![Check Your Email](screens/13-check-email.png)
+
+- Confirms where the link went and how long it lasts, with **Back to sign in** and a resend link.
+
 ## Shared
 
-- The sidebar is on every screen. Unbuilt sections stay visible but disabled.
+- The sidebar is on every app screen. Unbuilt sections stay visible but disabled. The landing page and the sign-in screens don't have it.
+- The sign-in screens share the AuthBrandPanel component on the left.
 - Components and tokens come from the Foundations page in Figma (see the [design README](README.md)).
 - Loading states use the wireframe triangle loader (`MeshLoader`).
