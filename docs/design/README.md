@@ -7,8 +7,8 @@ Screens are designed in Figma first, then built from the same tokens. This folde
 
 The file has three pages:
 
-- **Screens** holds the eight frames below.
-- **Foundations** holds the color variables, text styles, icons, and shared components: Button, IconButton, Dropdown, NavItem, Sidebar, CommitRow, Badge, Avatar, InfoRow, LegendItem, ViewportToolbar, and AxisGizmo.
+- **Screens** holds the thirteen frames below. The app screens are in the first two rows, and the landing page and sign-in flow are in the third.
+- **Foundations** holds the color variables, text styles, icons, and shared components: Button, IconButton, Dropdown, NavItem, Sidebar, CommitRow, Badge, Avatar, InfoRow, LegendItem, ViewportToolbar, AxisGizmo, Logo, TextField, Checkbox, and AuthBrandPanel.
 - **Archive** keeps earlier drafts.
 
 ## Frames
@@ -23,10 +23,15 @@ The file has three pages:
 | 6 | Conflict Resolution | Left and right close-ups, with keep left, keep right, or manual select |
 | 7 | Merge Result | Preview of the merged mesh, a summary, and the commit message |
 | 8 | Commit History | Commits grouped by day, filterable by branch and author |
+| 9 | Landing Page | What MeshGit does, how the commit / compare / merge loop works, and the way in |
+| 10 | Sign In | GitHub or email and password, with remember me and a reset link |
+| 11 | Create Account | Name, email, password with a strength meter, and the terms checkbox |
+| 12 | Reset Password | Email field for the reset link, shown with its error state |
+| 13 | Check Your Email | Confirmation after the reset link is sent |
 
 ## Tokens
 
-The palette is warm and neutral: beige surfaces, a dark olive nav rail, and forest green for primary actions. Type is Inter, Bold for headings and labels and Regular for body text.
+The palette is warm and neutral: beige surfaces, a dark olive nav rail, and forest green for primary actions. Type is Inter, Bold for headings and labels and Regular for body text. The landing page adds three larger styles: Hero (56), Section Title (32), and Lead (17).
 
 | Token | Value | Use |
 | --- | --- | --- |
