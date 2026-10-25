@@ -31,7 +31,9 @@ The file has three pages:
 
 ## Tokens
 
-The palette is warm and neutral: beige surfaces, a dark olive nav rail, and forest green for primary actions. Type is Inter, Bold for headings and labels and Regular for body text. The landing page adds three larger styles: Hero (56), Section Title (32), and Lead (17).
+The palette is warm and neutral
+Type is Inter, Bold for headings and labels and Regular for body text.
+The landing page adds three larger styles: Hero (56), Section Title (32), and Lead (17).
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -50,7 +52,7 @@ The palette is warm and neutral: beige surfaces, a dark olive nav rail, and fore
 
 ## Studio look
 
-The app chrome stays light (beige page, cream cards, olive nav), but every 3D view sits on a dark studio stage: a dark floor with a soft key light and a vignette, like a product render. Panels that float over the model are dark glass: translucent, blurred behind, with a thin border. The viewport toolbar stays cream so it reads as the same control everywhere.
+The app chrome stays light (beige page, cream cards, olive nav), but every 3D view sits on a dark studio stage: a dark floor with a soft key light and a vignette, like a product render.  We will look into a light and dark mode later. It should not be a huge change. Panels that float over the model are dark glass: translucent, blurred behind, with a thin border. The viewport toolbar stays cream so it reads as the same control everywhere.
 
 | Token | Value | Use |
 | --- | --- | --- |
