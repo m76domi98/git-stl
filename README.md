@@ -8,7 +8,7 @@ MeshGit brings Git-style history to STL files. Instead of text diffs, it shows c
 
 ## Why
 
-Git is a poor fit for STL files. The files are binary, diffs are unreadable, and merge conflicts can't be interpreted without seeing the geometry. Teams end up with `bracket_v3_final_FINAL.stl` and a group chat. MeshGit treats geometry as the thing being versioned.
+Git is a poor fit for STL files. The files are binary, diffs are unreadable, and merge conflicts can't be interpreted without seeing the geometry. Especially as an avid 3D-printer, collaborating across different versions of STL files has always been a pain. Teams end up with `bracket_v3_final_FINAL.stl` and a group chat. MeshGit treats geometry as the thing being versioned.
 
 ## Features
 
@@ -30,7 +30,7 @@ Git is a poor fit for STL files. The files are binary, diffs are unreadable, and
 | Frontend | React, Three.js, Vite (`packages/frontend`) |
 | API | Node.js, Express, TypeScript, zod (`packages/backend`) |
 | Geometry service | Python, FastAPI, trimesh (`packages/geometry`) |
-| Database | PostgreSQL |
+| Database | PostgreSQL (storing metadata) |
 | Mesh storage | Docker volume today, S3-compatible object storage planned |
 | CLI | Node.js (`packages/cli`) |
 
