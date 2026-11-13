@@ -20,7 +20,7 @@ export function signUserContext(key: string, userId: string, transactionId: stri
 /** Stores the key and (re)creates `app_user_id()`. Runs as the migration login. */
 export async function applyUserContext(pool: Pool, key: string): Promise<void> {
   await pool.query(`
-    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;
 
     CREATE TABLE IF NOT EXISTS app_context_key (
       id  BOOLEAN PRIMARY KEY DEFAULT true CHECK (id),
@@ -38,7 +38,7 @@ export async function applyUserContext(pool: Pool, key: string): Promise<void> {
   await pool.query(`
     CREATE OR REPLACE FUNCTION app_user_id() RETURNS uuid
       LANGUAGE plpgsql STABLE SECURITY DEFINER
-      SET search_path = pg_catalog, public
+      SET search_path = pg_catalog, public, pg_temp
     AS $f$
     DECLARE
       uid text := current_setting('app.user_id', true);
@@ -48,8 +48,8 @@ export async function applyUserContext(pool: Pool, key: string): Promise<void> {
       IF coalesce(uid, '') = '' OR coalesce(sig, '') = '' THEN
         RETURN NULL;
       END IF;
-      SELECT encode(hmac(uid || ':' || pg_current_xact_id()::text, k.key, 'sha256'), 'hex')
-        INTO expected FROM app_context_key k;
+      SELECT encode(public.hmac(uid || ':' || pg_current_xact_id()::text, k.key, 'sha256'), 'hex')
+        INTO expected FROM public.app_context_key k;
       IF expected IS NULL OR expected <> sig THEN
         RETURN NULL;
       END IF;

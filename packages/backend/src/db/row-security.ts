@@ -117,7 +117,7 @@ async function applyAuthGrants(pool: Pool): Promise<void> {
     -- id (see user-context.ts). SQL injected into sign-in can't sign, so it gets null.
     CREATE OR REPLACE FUNCTION github_access_token() RETURNS text
       LANGUAGE sql STABLE SECURITY DEFINER
-      SET search_path = pg_catalog, public
+      SET search_path = pg_catalog, public, pg_temp
     AS $f$ SELECT u.github_access_token FROM public.users u WHERE u.id = public.app_user_id() $f$;
     REVOKE ALL ON FUNCTION github_access_token() FROM PUBLIC;
     GRANT EXECUTE ON FUNCTION github_access_token() TO ${AUTH_ROLE};

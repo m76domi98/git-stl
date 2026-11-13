@@ -3,7 +3,7 @@ import { signUserContext } from './user-context.js'
 import { createUserDb } from './user-db.js'
 import adminPool from '../test/admin-pool.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
-import { CONTEXT_KEY, appPool } from '../test/runtime-pools.js'
+import { CONTEXT_KEY, appPool, authPool } from '../test/runtime-pools.js'
 
 // Every query here goes over the real meshgit_app login, as request queries do.
 // None of them filter by owner, so only grants and row level security stand
@@ -29,7 +29,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await deleteUsers(adminPool, [alice, bob])
-  await Promise.all([adminPool.end(), appPool.end()])
+  await Promise.all([adminPool.end(), appPool.end(), authPool.end()])
 })
 
 describe("the runtime login keeps user A out of user B's projects", () => {
@@ -139,10 +139,17 @@ describe('a session cannot pose as another user by setting app.user_id', () => {
     await expect(poseAs(bob, () => signUserContext(CONTEXT_KEY, bob, '1'))).resolves.toEqual([])
   })
 
-  it("can't read the signing key", async () => {
-    await expect(appPool.query('SELECT key FROM app_context_key')).rejects.toMatchObject({
+  it.each([
+    ['meshgit_app', () => appPool],
+    ['meshgit_auth', () => authPool],
+  ])("can't read the signing key or its column statistics as %s", async (_role, pool) => {
+    await expect(pool().query('SELECT key FROM app_context_key')).rejects.toMatchObject({
       code: PERMISSION_DENIED,
     })
+    const { rows } = await pool().query(
+      "SELECT most_common_vals FROM pg_stats WHERE tablename = 'app_context_key'",
+    )
+    expect(rows).toEqual([])
   })
 
   it('reads as the user when the signature is genuine', async () => {
