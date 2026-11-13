@@ -109,52 +109,6 @@ button, input {
 
 .back-btn { align-self: flex-start; }
 
-/* ── Project header / commit compose ──────────────────── */
-.project-header {
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.project-header-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
-.project-header-sub {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.project-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.commit-compose {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px 16px;
-  flex-wrap: wrap;
-}
-
-.drop-label {
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.drop-label.loaded { color: var(--text); }
-
-.file-size {
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
 .commit-msg-input {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -168,12 +122,6 @@ button, input {
 }
 
 .commit-msg-input:focus { border-color: var(--accent); }
-
-.commit-error {
-  padding: 0 20px 16px;
-  font-size: 0.75rem;
-  color: var(--red);
-}
 
 /* ── Stat card ─────────────────────────────────────── */
 .stat-card {
