@@ -1,9 +1,19 @@
 import type { Pool } from 'pg'
 import { ensureRuntimeRoles, type RuntimePasswords } from './roles.js'
 import { applyRowSecurity } from './row-security.js'
+import { applyUserContext } from './user-context.js'
 
 /** Creates or updates the schema. Runs as the migration login, never the web app's. */
-export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<void> {
+export interface MigrateOptions {
+  readonly passwords: RuntimePasswords
+  /** Key for signing the per-transaction user id (see user-context.ts). */
+  readonly contextKey: string
+}
+
+export async function migrate(
+  pool: Pool,
+  { passwords, contextKey }: MigrateOptions,
+): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -101,8 +111,11 @@ export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<
     );
     CREATE INDEX IF NOT EXISTS processing_attempts_user_created_idx
       ON processing_attempts (user_id, created_at DESC);
+    -- Users who stopped uploading never prune their own rows, so sweep them here.
+    DELETE FROM processing_attempts WHERE created_at < NOW() - INTERVAL '2 days';
   `)
 
   await ensureRuntimeRoles(pool, passwords)
+  await applyUserContext(pool, contextKey)
   await applyRowSecurity(pool)
 }

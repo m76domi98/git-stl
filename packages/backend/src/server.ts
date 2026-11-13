@@ -3,9 +3,10 @@ import pg from 'pg'
 import { createApp } from './app.js'
 import { loadAuth } from './auth-loader.js'
 import { loadConfig } from './config.js'
-import { assertRuntimeLogin } from './db/login-check.js'
+import { assertRuntimeLogin, assertSignedUserContext } from './db/login-check.js'
 import authPool from './db/pool.js'
 import { APP_ROLE, AUTH_ROLE } from './db/roles.js'
+import { createUserDb } from './db/user-db.js'
 import { createCommitEvents } from './features/commits/commit-events.js'
 import { createGeometryClient } from './shared/geometry/geometry-client.js'
 import { createMeshStorage } from './shared/storage.js'
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
   }
   await assertRuntimeLogin(appPool, APP_ROLE)
   await assertRuntimeLogin(authPool, AUTH_ROLE)
+  await assertSignedUserContext(createUserDb(appPool, { contextKey: config.dbContextKey }))
 
   const storage = createMeshStorage(config.uploadsDir)
   const events = createCommitEvents()

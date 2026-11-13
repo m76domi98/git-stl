@@ -4,28 +4,21 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { assertRuntimeLogin } from './login-check.js'
 import { APP_ROLE, resetLogin } from './roles.js'
 import adminPool from '../test/admin-pool.js'
+import { changeRolesSerially } from '../test/fixtures.js'
 import { loginUrl } from '../test/runtime-pools.js'
 
 // A throwaway role, so this never races tests that use the real runtime logins.
 const ROLE = 'meshgit_reset_check'
 
+const DATABASE = new URL(process.env.DATABASE_URL!).pathname.slice(1)
+
 afterAll(async () => {
-  const { rows } = await adminPool.query<{ sql: string }>(
-    "SELECT format('REVOKE CONNECT ON DATABASE %I FROM %I', current_database(), $1::text) AS sql",
-    [ROLE],
-  )
-  await adminPool.query(rows[0]!.sql)
-  await adminPool.query(`DROP ROLE IF EXISTS ${ROLE}`)
+  await changeRolesSerially(adminPool, [`DROP OWNED BY ${ROLE}`, `DROP ROLE ${ROLE}`])
   await adminPool.end()
 })
 
-async function grantConnect(role: string): Promise<void> {
-  const { rows } = await adminPool.query<{ sql: string }>(
-    "SELECT format('GRANT CONNECT ON DATABASE %I TO %I', current_database(), $1::text) AS sql",
-    [role],
-  )
-  await adminPool.query(rows[0]!.sql)
-}
+const grantConnect = (role: string) =>
+  changeRolesSerially(adminPool, [`GRANT CONNECT ON DATABASE "${DATABASE}" TO ${role}`])
 
 describe('resetLogin', () => {
   it('creates a login that passes the least-privilege check', async () => {

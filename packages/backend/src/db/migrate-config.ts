@@ -12,11 +12,14 @@ const migrateEnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   APP_DB_PASSWORD: password,
   AUTH_DB_PASSWORD: password,
+  // Signs the per-transaction user id. The web app needs the same value.
+  DB_CONTEXT_KEY: z.string().min(32, 'must be at least 32 characters'),
 })
 
 export interface MigrateConfig {
   readonly databaseUrl: string
   readonly passwords: RuntimePasswords
+  readonly contextKey: string
 }
 
 /** Settings for the migrate command only. The web app never reads these. */
@@ -32,5 +35,6 @@ export function loadMigrateConfig(
   return Object.freeze({
     databaseUrl: e.DATABASE_URL,
     passwords: Object.freeze({ app: e.APP_DB_PASSWORD, auth: e.AUTH_DB_PASSWORD }),
+    contextKey: e.DB_CONTEXT_KEY,
   })
 }

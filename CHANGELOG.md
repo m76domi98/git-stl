@@ -8,6 +8,9 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 - Local design reference screenshots in `docs/design/possible/` are now ignored by git.
 
 ### Backend
+- Row level security now trusts only a signed user id (`DB_CONTEXT_KEY`), so a database session can't pose as another user even with arbitrary SQL.
+- GitHub tokens can only be read for the signed-in user, so SQL injected into sign-in can't read anyone's token.
+- A per-user limit on mesh cleanings running at once (`QUOTA_CONCURRENT_CLEANS`), ceilings on every `QUOTA_*` setting, and pruning of old processing records.
 - The web app no longer has the database owner's login. Migrations run as their own command (a one-shot `migrate` service in Docker Compose), and the server only connects with two least-privilege logins: `meshgit_app` for requests and `meshgit_auth` for sign-in. It refuses to start if either is missing or has more rights than it needs.
 - A daily processing budget (`QUOTA_PROCESSING_PER_DAY`) that counts every mesh cleaning started, including failures, so broken files can't be used to burn geometry CPU. The daily upload limit still counts only successful commits.
 - Upgraded express, multer and zod to patched versions, which fixes 7 known vulnerabilities in the backend's dependencies, including IP spoofing through `proxy-addr` and denial of service in `body-parser`, `qs` and zod.

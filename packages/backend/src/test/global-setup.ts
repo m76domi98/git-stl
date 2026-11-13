@@ -6,7 +6,6 @@ import pool from './admin-pool.js'
 // migration login (DATABASE_URL), as `pnpm migrate` would, then tests connect
 // with the runtime logins using APP_DB_PASSWORD and AUTH_DB_PASSWORD.
 export async function setup(): Promise<void> {
-  const { passwords } = loadMigrateConfig()
-  await migrate(pool, passwords)
+  await migrate(pool, loadMigrateConfig())
   await pool.end()
 }

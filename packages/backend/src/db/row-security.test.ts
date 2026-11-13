@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import pool from '../test/admin-pool.js'
 import { APP_ROLE } from './roles.js'
+import { signUserContext } from './user-context.js'
+import { CONTEXT_KEY } from '../test/runtime-pools.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 
 const PERMISSION_DENIED = '42501'
@@ -17,7 +19,15 @@ async function asUser<T>(userId: string | null, sql: string, params: unknown[] =
   try {
     await client.query('BEGIN')
     await client.query(`SET LOCAL ROLE ${APP_ROLE}`)
-    if (userId) await client.query("SELECT set_config('app.user_id', $1, true)", [userId])
+    if (userId) {
+      const { rows } = await client.query<{ xid: string }>(
+        'SELECT pg_current_xact_id()::text AS xid',
+      )
+      await client.query(
+        "SELECT set_config('app.user_id', $1, true), set_config('app.user_sig', $2, true)",
+        [userId, signUserContext(CONTEXT_KEY, userId, rows[0]!.xid)],
+      )
+    }
     const { rows } = await client.query(sql, params)
     return rows as T[]
   } finally {

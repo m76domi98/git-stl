@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import pool from '../test/admin-pool.js'
 import { createUserDb } from './user-db.js'
-import { appPool } from '../test/runtime-pools.js'
+import { CONTEXT_KEY, appPool } from '../test/runtime-pools.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 
-const userDb = createUserDb(appPool)
+const userDb = createUserDb(appPool, { contextKey: CONTEXT_KEY })
 
 let alice: string
 let bob: string
@@ -37,7 +37,9 @@ describe('createUserDb', () => {
   })
 
   it('refuses to run on a connection that is not the app login', async () => {
-    await expect(createUserDb(pool).query(alice, 'SELECT 1')).rejects.toThrow(/meshgit_app/)
+    await expect(
+      createUserDb(pool, { contextKey: CONTEXT_KEY }).query(alice, 'SELECT 1'),
+    ).rejects.toThrow(/meshgit_app/)
   })
 
   it('rejects a user id that is not a uuid before touching the database', async () => {

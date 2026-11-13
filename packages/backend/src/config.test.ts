@@ -5,6 +5,7 @@ import { DEFAULT_QUOTAS } from './shared/quotas.js'
 const base = {
   APP_DATABASE_URL: 'postgres://meshgit_app:p@localhost:5432/db',
   AUTH_DATABASE_URL: 'postgres://meshgit_auth:p@localhost:5432/db',
+  DB_CONTEXT_KEY: 'context-key-0123456789-0123456789',
 }
 
 describe('loadConfig', () => {
@@ -16,6 +17,7 @@ describe('loadConfig', () => {
       port: 3001,
       appDatabaseUrl: base.APP_DATABASE_URL,
       authDatabaseUrl: base.AUTH_DATABASE_URL,
+      dbContextKey: base.DB_CONTEXT_KEY,
       frontendUrl: 'http://localhost:5173',
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',
@@ -73,18 +75,30 @@ describe('loadConfig', () => {
       QUOTA_STORAGE_MB: '10',
       QUOTA_UPLOADS_PER_DAY: '5',
       QUOTA_PROCESSING_PER_DAY: '7',
+      QUOTA_CONCURRENT_CLEANS: '4',
       QUOTA_PROJECTS: '3',
     })
     expect(config.quotas).toEqual({
       maxStorageBytes: 10 * 1024 * 1024,
       maxUploadsPerDay: 5,
       maxProcessingPerDay: 7,
+      maxConcurrentCleans: 4,
       maxProjects: 3,
     })
   })
 
   it('rejects a spending cap below 1', () => {
     expect(() => loadConfig({ ...base, QUOTA_PROJECTS: '0' })).toThrow(/QUOTA_PROJECTS/)
+  })
+
+  it.each([
+    ['QUOTA_STORAGE_MB', '1048577'],
+    ['QUOTA_UPLOADS_PER_DAY', '10001'],
+    ['QUOTA_PROCESSING_PER_DAY', '20001'],
+    ['QUOTA_PROJECTS', '10001'],
+    ['QUOTA_CONCURRENT_CLEANS', '17'],
+  ])('rejects %s above its ceiling, so a typo cannot switch the cap off', (name, value) => {
+    expect(() => loadConfig({ ...base, [name]: value })).toThrow(new RegExp(`${name}.*<=`))
   })
 
   it('returns a frozen object', () => {

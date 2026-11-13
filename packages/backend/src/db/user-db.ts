@@ -1,6 +1,7 @@
 import type { Pool, PoolClient, QueryResultRow } from 'pg'
 import { AppError } from '../shared/http/errors.js'
 import { APP_ROLE } from './roles.js'
+import { signUserContext } from './user-context.js'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -9,26 +10,36 @@ export type Queryable = Pick<PoolClient, 'query'>
 
 /**
  * Database access for request handlers. Give it the app pool (logged in as the
- * restricted app role). Every call runs in a transaction with `app.user_id` set,
- * so row level security applies.
+ * restricted app role). Every call runs in a transaction with a signed
+ * `app.user_id`, so row level security applies (see user-context.ts).
  */
 export interface UserDb {
   query<R extends QueryResultRow>(userId: string, text: string, params?: unknown[]): Promise<R[]>
   transaction<T>(userId: string, fn: (db: Queryable) => Promise<T>): Promise<T>
 }
 
-export function createUserDb(pool: Pool): UserDb {
+export interface UserDbOptions {
+  /** DB_CONTEXT_KEY: signs the user id for each transaction. */
+  readonly contextKey: string
+  /** The login the pool must use. Anything else fails closed. */
+  readonly role?: string
+}
+
+export function createUserDb(pool: Pool, { contextKey, role = APP_ROLE }: UserDbOptions): UserDb {
   async function transaction<T>(userId: string, fn: (db: Queryable) => Promise<T>): Promise<T> {
     if (!UUID.test(userId)) throw new AppError(401, 'Not authenticated')
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
-      const { rows } = await client.query<{ role: string }>(
-        "SELECT set_config('app.user_id', $1, true), current_user AS role",
-        [userId],
+      const { rows } = await client.query<{ role: string; xid: string }>(
+        'SELECT current_user AS role, pg_current_xact_id()::text AS xid',
       )
       // Fail closed if this was wired to the admin pool, where RLS would not apply.
-      if (rows[0]?.role !== APP_ROLE) throw new Error(`UserDb must connect as ${APP_ROLE}`)
+      if (rows[0]?.role !== role) throw new Error(`UserDb must connect as ${role}`)
+      await client.query(
+        "SELECT set_config('app.user_id', $1, true), set_config('app.user_sig', $2, true)",
+        [userId, signUserContext(contextKey, userId, rows[0].xid)],
+      )
       const result = await fn(client)
       await client.query('COMMIT')
       client.release()
