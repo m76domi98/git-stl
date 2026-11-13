@@ -4,7 +4,7 @@ Last updated: November 13, 2026
 
 ## Where things are
 
-MeshGit can take an STL upload, clean it, store it as a commit, show the project's history, and render any version in 3D. Part of the codebase has also gone through a structural cleanup:
+Tessera can take an STL upload, clean it, store it as a commit, show the project's history, and render any version in 3D. Part of the codebase has also gone through a structural cleanup:
 
 - **Backend:** TypeScript, feature folders, zod validation, a consistent response envelope, integration tests against Postgres (91% coverage), and hardening (rate limits, security headers, non-root image). The database keeps each user to their own data with row level security, the server runs on two least-privilege logins, and per-user spending caps guard uploads and mesh cleaning.
 - **Tooling:** ESLint, Prettier, ruff, and CI on every push and pull request.
@@ -69,6 +69,7 @@ The current screens were built from a rough static mockup. Before restructuring 
 
 - [ ] CLI in TypeScript with `commit`, `log`, and `diff` commands against the API
 - [ ] Geometry service split into modules (`api`, `cleaning`, `diff`) with pytest, and pytest in CI
+- [ ] Stronger mesh repair: when trimesh's cleanup still leaves a mesh that isn't watertight, fall back to MeshFix (`pymeshfix`) to fix non-manifold edges, self-intersections, and holes. Measure the success rate on real STLs against the 95% target
 
 ### 5. Product features
 

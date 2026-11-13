@@ -1,14 +1,14 @@
-# MeshGit
+# Tessera
 
 Visual version control for 3D models.
 
-MeshGit brings Git-style history to STL files. Instead of text diffs, it shows changes in 3D. You upload a model, commit new versions, see what was added or removed in the viewport, and eventually branch and merge models with help resolving overlapping edits.
+Tessera brings Git-style history to STL files. Instead of text diffs, it shows changes in 3D. You upload a model, commit new versions, see what was added or removed in the viewport, and eventually branch and merge models with help resolving overlapping edits.
 
 > **Status:** early development. Upload, mesh cleaning, commit history, and the 3D viewer work. Visual diffing is in progress. Branching and merging are planned. See the [roadmap](docs/roadmap.md).
 
 ## Why
 
-Git is a poor fit for STL files. The files are binary, diffs are unreadable, and merge conflicts can't be interpreted without seeing the geometry. Especially as an avid 3D-printer, collaborating across different versions of STL files has always been a pain. Teams end up with `bracket_v3_final_FINAL.stl` and a group chat. MeshGit treats geometry as the thing being versioned.
+Git is a poor fit for STL files. The files are binary, diffs are unreadable, and merge conflicts can't be interpreted without seeing the geometry. Especially as an avid 3D-printer, collaborating across different versions of STL files has always been a pain. Teams end up with `bracket_v3_final_FINAL.stl` and a group chat. Tessera treats geometry as the thing being versioned.
 
 ## Features
 
@@ -104,7 +104,7 @@ packages/
   backend/    Express API: features/<name>/{routes,service,repository}, shared/
   frontend/   React app and Three.js viewer
   geometry/   FastAPI service for mesh cleaning, diffing, merging
-  cli/        meshgit command line tool
+  cli/        tessera command line tool
 docs/         PRD, architecture, roadmap, design notes
 ```
 

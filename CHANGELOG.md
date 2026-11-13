@@ -1,11 +1,13 @@
 # Changelog
 
-Notable changes to MeshGit, newest first. Dates are when the change was merged into `main`.
+Notable changes to Tessera, newest first. Dates are when the change was merged into `main`.
 
 ## 2026-11-13
 
 ### Docs
 - The README's setup steps now cover the database secrets and the `migrate` step, and there's a new Security section. The roadmap is up to date.
+- The project is renamed from MeshGit to Tessera, since "MeshGit" is the name of a 2013 paper on mesh diffing and merging (Denning and Pellacini) that the diff and merge work will build on.
+- The roadmap has a task for stronger mesh repair with MeshFix.
 
 ### Tooling
 - Local design reference screenshots in `docs/design/possible/` are now ignored by git.

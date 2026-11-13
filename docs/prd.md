@@ -2,7 +2,7 @@
 
 ## Product Name
 
-MeshGit (working title)
+Tessera
 
 Visual version control and collaborative merging for STL/mesh files.
 
@@ -10,7 +10,7 @@ Visual version control and collaborative merging for STL/mesh files.
 
 # 1. Overview
 
-MeshGit enables users to track, compare, branch, and merge 3D models similarly to source control systems, but with geometry-aware operations instead of text diffs.
+Tessera enables users to track, compare, branch, and merge 3D models similarly to source control systems, but with geometry-aware operations instead of text diffs.
 
 Users upload STL files, create commits, inspect visual differences, and manage parallel edits using an interactive 3D interface.
 

@@ -4,7 +4,7 @@ import trimesh
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
 
-app = FastAPI(title="MeshGit Geometry Service")
+app = FastAPI(title="Tessera Geometry Service")
 
 
 @app.get("/health")

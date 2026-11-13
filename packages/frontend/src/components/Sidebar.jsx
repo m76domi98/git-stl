@@ -73,7 +73,7 @@ export default function Sidebar({ token, user, logout, selectedProject, onSelect
 
   return (
     <aside className="nav-rail">
-      <div className="nav-logo"><span className="logo-mark" />MeshGit</div>
+      <div className="nav-logo"><span className="logo-mark" />Tessera</div>
 
       <div className="workspace-pill">
         <span>@{user.githubUsername}</span>
