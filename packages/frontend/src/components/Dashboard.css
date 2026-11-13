@@ -122,3 +122,82 @@
   border-top: 1px solid var(--border);
   cursor: default;
 }
+
+/* ── Commit timeline ───────────────────────────────── */
+.commit-rail {
+  list-style: none;
+  position: relative;
+  padding: 4px 0;
+}
+
+.commit-rail::before {
+  content: '';
+  position: absolute;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.commit-day-heading {
+  position: relative;
+  padding: 12px 20px 6px 44px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.commit-item {
+  position: relative;
+  padding: 10px 20px 10px 44px;
+}
+
+.commit-dot {
+  position: absolute;
+  left: 28px;
+  top: 16px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+
+.commit-body { min-width: 0; flex: 1; }
+
+.commit-hash {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.commit-message {
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.commit-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.branch-badge {
+  margin-left: auto;
+  background: var(--clay-soft);
+  color: var(--clay-text);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 600;
+}
