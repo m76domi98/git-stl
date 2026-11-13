@@ -1,11 +1,11 @@
-import type { UserDb } from '../../db/user-db.js'
+import { lockUser, type UserDb } from '../../db/user-db.js'
 import type { CreateProjectInput, Project, ProjectSummary } from './projects.types.js'
 
 export interface ProjectsRepository {
   listByOwner(ownerId: string): Promise<ProjectSummary[]>
-  create(ownerId: string, input: CreateProjectInput): Promise<Project>
+  /** Creates the project, or returns null when the owner already has `maxProjects`. */
+  create(ownerId: string, input: CreateProjectInput, maxProjects: number): Promise<Project | null>
   findOwned(id: string, ownerId: string): Promise<Project | null>
-  countByOwner(ownerId: string): Promise<number>
 }
 
 /** Every query runs as the owner, so row level security backs up the owner filters. */
@@ -24,13 +24,20 @@ export function createProjectsRepository(db: UserDb): ProjectsRepository {
       )
     },
 
-    async create(ownerId, { name, description }) {
-      const rows = await db.query<Project>(
-        ownerId,
-        'INSERT INTO projects (owner_id, name, description) VALUES ($1, $2, $3) RETURNING *',
-        [ownerId, name, description],
-      )
-      return rows[0] as Project
+    async create(ownerId, { name, description }, maxProjects) {
+      return db.transaction(ownerId, async (tx) => {
+        await lockUser(tx, ownerId)
+        const { rows: counted } = await tx.query<{ count: number }>(
+          'SELECT COUNT(*)::int AS count FROM projects WHERE owner_id = $1',
+          [ownerId],
+        )
+        if ((counted[0]?.count ?? 0) >= maxProjects) return null
+        const { rows } = await tx.query<Project>(
+          'INSERT INTO projects (owner_id, name, description) VALUES ($1, $2, $3) RETURNING *',
+          [ownerId, name, description],
+        )
+        return rows[0] as Project
+      })
     },
 
     async findOwned(id, ownerId) {
@@ -40,15 +47,6 @@ export function createProjectsRepository(db: UserDb): ProjectsRepository {
         [id, ownerId],
       )
       return rows[0] ?? null
-    },
-
-    async countByOwner(ownerId) {
-      const [row] = await db.query<{ count: number }>(
-        ownerId,
-        'SELECT COUNT(*)::int AS count FROM projects WHERE owner_id = $1',
-        [ownerId],
-      )
-      return row?.count ?? 0
     },
   }
 }

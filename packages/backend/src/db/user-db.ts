@@ -41,6 +41,14 @@ export function createUserDb(pool: Pool): UserDb {
   }
 }
 
+/**
+ * Serializes a user's quota-checked writes for the rest of the transaction, so
+ * parallel requests can't all pass a "count < cap" check before any insert lands.
+ */
+export async function lockUser(db: Queryable, userId: string): Promise<void> {
+  await db.query("SELECT pg_advisory_xact_lock(hashtext('meshgit-user:' || $1))", [userId])
+}
+
 /** Rolls back and releases; a broken connection is discarded instead of reused. */
 export async function rollback(client: PoolClient): Promise<void> {
   try {

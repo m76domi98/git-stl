@@ -93,4 +93,23 @@ describe('project spending cap', () => {
       await deleteUsers(pool, [carol])
     }
   })
+
+  it('holds the limit when requests arrive at the same time', async () => {
+    const capped = testApp({ quotas: { ...DEFAULT_QUOTAS, maxProjects: 2 } })
+    const dave = await createUser(pool)
+    try {
+      const results = await Promise.all(
+        Array.from({ length: 6 }, (_, i) =>
+          request(capped)
+            .post('/api/projects')
+            .set(as(dave))
+            .send({ name: `p${i}` }),
+        ),
+      )
+      expect(results.filter((r) => r.status === 201)).toHaveLength(2)
+      expect(results.filter((r) => r.status === 403)).toHaveLength(4)
+    } finally {
+      await deleteUsers(pool, [dave])
+    }
+  })
 })

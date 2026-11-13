@@ -16,10 +16,9 @@ export function createProjectsService(
   return {
     list: (userId) => repo.listByOwner(userId),
     async create(userId, input) {
-      if ((await repo.countByOwner(userId)) >= quotas.maxProjects) {
-        throw new AppError(403, 'Project limit reached')
-      }
-      return repo.create(userId, input)
+      const project = await repo.create(userId, input, quotas.maxProjects)
+      if (!project) throw new AppError(403, 'Project limit reached')
+      return project
     },
     async get(userId, projectId) {
       const project = await repo.findOwned(projectId, userId)

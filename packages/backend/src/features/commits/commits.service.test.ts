@@ -15,7 +15,6 @@ function service(commits: Partial<CommitsRepository>) {
     listByOwner: vi.fn(),
     create: vi.fn(),
     findOwned: vi.fn(async () => project),
-    countByOwner: vi.fn(),
   }
   const storage: MeshStorage = { store: vi.fn(), read: vi.fn(), remove: vi.fn() }
   const svc = createCommitsService({
