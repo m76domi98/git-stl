@@ -1,6 +1,6 @@
 # Architecture
 
-How MeshGit fits together today. For where it's heading, see the [roadmap](roadmap.md).
+How Tessera fits together today. For where it's heading, see the [roadmap](roadmap.md).
 
 ## Services
 

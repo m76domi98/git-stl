@@ -23,7 +23,7 @@ Written for whoever picks these up next.
 .catch((err: unknown) => log('[commit-events] listener failed', err))
 ```
 
-A large mesh commits fine into MeshGit's own storage, then fails to mirror to GitHub — **silently**, logged server-side only. The user gets no signal their GitHub copy is out of sync.
+A large mesh commits fine into Tessera's own storage, then fails to mirror to GitHub — **silently**, logged server-side only. The user gets no signal their GitHub copy is out of sync.
 
 ### Target design
 
@@ -37,7 +37,7 @@ A large mesh commits fine into MeshGit's own storage, then fails to mirror to Gi
 **GitHub mirror**: stop pretending every commit can go to GitHub.
 - Check size before calling `createBlob()`. Under the cap (leave headroom, e.g. 90MB): mirror as today.
 - Over the cap: **skip and surface it**. The mirror runs after the response is sent, so record the outcome on the commit (e.g. a `github_sync` column: `synced`, `skipped_too_large`, `failed`) and show it in the history view instead of only logging it.
-- If full-history-on-GitHub for large meshes actually becomes a requirement: implement real Git LFS — commit a pointer file (`oid` + `size`) via the same Git Data API calls, upload the real bytes to the repo's LFS storage via the LFS batch API. Don't build this speculatively; only do it if a real use case needs meshes >100MB to have GitHub history, not just a MeshGit copy.
+- If full-history-on-GitHub for large meshes actually becomes a requirement: implement real Git LFS — commit a pointer file (`oid` + `size`) via the same Git Data API calls, upload the real bytes to the repo's LFS storage via the LFS batch API. Don't build this speculatively; only do it if a real use case needs meshes >100MB to have GitHub history, not just a Tessera copy.
 
 **Delta storage** (from the PRD, "planned," not started): storing a full STL per commit is wasteful once diffing exists — a commit that only moves a few vertices doesn't need a full duplicate copy. This depends on §2 being built first (you need vertex-level diffs before you can store just the delta). Not worth designing further until diff is real and its output shape is known.
 

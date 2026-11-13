@@ -4,7 +4,7 @@ Last updated: November 13, 2026
 
 ## Where things are
 
-MeshGit can take an STL upload, clean it, store it as a commit, show the project's history, and render any version in 3D. Part of the codebase has also gone through a structural cleanup:
+Tessera can take an STL upload, clean it, store it as a commit, show the project's history, and render any version in 3D. Part of the codebase has also gone through a structural cleanup:
 
 - **Backend:** TypeScript, feature folders, zod validation, a consistent response envelope, integration tests against Postgres (91% coverage), and hardening (rate limits, security headers, non-root image). The database keeps each user to their own data with row level security, the server runs on two least-privilege logins, and per-user spending caps guard uploads and mesh cleaning.
 - **Tooling:** ESLint, Prettier, ruff, and CI on every push and pull request.

@@ -99,7 +99,7 @@ One conflict at a time, side by side.
 
 ![Landing Page](screens/9-landing.png)
 
-The public page people see before they sign in. It explains what MeshGit is and sends them to sign up.
+The public page people see before they sign in. It explains what Tessera is and sends them to sign up.
 
 - A top nav with the logo, How it works, Features, Docs, **Sign in**, and **Get started**.
 - A hero with the headline, a short description, **Create free account** and **Sign in**, and a visual diff preview with the added / removed legend.
