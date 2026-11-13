@@ -25,6 +25,10 @@ export async function applyRowSecurity(pool: Pool): Promise<void> {
     CREATE OR REPLACE FUNCTION app_user_id() RETURNS uuid LANGUAGE sql STABLE AS
       $f$ SELECT NULLIF(current_setting('app.user_id', true), '')::uuid $f$;
 
+    -- Meshes are written just before their commit, so they carry their own owner.
+    ALTER TABLE meshes ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES users(id) ON DELETE CASCADE;
+    ALTER TABLE meshes ALTER COLUMN owner_id SET DEFAULT app_user_id();
+
     ALTER TABLE users ENABLE ROW LEVEL SECURITY;
     ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
     ALTER TABLE meshes ENABLE ROW LEVEL SECURITY;
@@ -53,9 +57,8 @@ export async function applyRowSecurity(pool: Pool): Promise<void> {
       USING (EXISTS (SELECT 1 FROM commits c JOIN projects p ON p.id = c.project_id
                      WHERE c.mesh_id = meshes.id AND p.owner_id = app_user_id()));
 
-    -- A mesh row is written just before its commit, so it can't be tied to a project yet.
     DROP POLICY IF EXISTS meshes_insert ON meshes;
     CREATE POLICY meshes_insert ON meshes FOR INSERT TO ${APP_ROLE}
-      WITH CHECK (app_user_id() IS NOT NULL);
+      WITH CHECK (owner_id = app_user_id());
   `)
 }

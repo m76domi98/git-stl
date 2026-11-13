@@ -85,6 +85,15 @@ describe('row level security for the app role', () => {
     ).rejects.toMatchObject({ code: PERMISSION_DENIED })
   })
 
+  it('stamps new meshes with the user and refuses meshes owned by someone else', async () => {
+    await expect(
+      asUser(alice, 'INSERT INTO meshes (id) VALUES ($1)', [randomUUID()]),
+    ).resolves.toEqual([])
+    await expect(
+      asUser(alice, 'INSERT INTO meshes (id, owner_id) VALUES ($1, $2)', [randomUUID(), bob]),
+    ).rejects.toMatchObject({ code: PERMISSION_DENIED })
+  })
+
   it('cannot update or delete projects at all', async () => {
     await expect(asUser(alice, "UPDATE projects SET name = 'x'")).rejects.toMatchObject({
       code: PERMISSION_DENIED,
