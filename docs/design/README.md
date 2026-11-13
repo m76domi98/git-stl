@@ -23,7 +23,7 @@ The file has three pages:
 | 6 | Conflict Resolution | Left and right close-ups, with keep left, keep right, or manual select |
 | 7 | Merge Result | Preview of the merged mesh, a summary, and the commit message |
 | 8 | Commit History | Commits grouped by day, filterable by branch and author |
-| 9 | Landing Page | What MeshGit does, how the commit / compare / merge loop works, and the way in |
+| 9 | Landing Page | A hero with a before/after slider on the model, a side-by-side diff viewer, how the commit / compare / merge loop works, and the way in |
 | 10 | Sign In | GitHub or email and password, with remember me and a reset link |
 | 11 | Create Account | Name, email, password with a strength meter, and the terms checkbox |
 | 12 | Reset Password | Email field for the reset link, shown with its error state |
@@ -34,6 +34,7 @@ The file has three pages:
 The palette is warm and neutral
 Type is Inter, Bold for headings and labels and Regular for body text.
 The landing page adds three larger styles: Hero (56), Section Title (32), and Lead (17).
+The two big landing headlines ("Version control for 3D models." and "Visual diffs that make sense.") use Newsreader Medium at 76 and 56 as a display serif. Newsreader stays on the landing page. The app screens are Inter only.
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -87,3 +88,4 @@ Every change color clears the 3:1 contrast minimum for graphics on the stage. Ma
 - Loading states use the on-theme wireframe triangle loader (`MeshLoader`), not a generic spinner.
 - The dashboard is the default view, and the full viewer is a secondary screen.
 - The renders in the frames are placeholders cropped from the mood board. The app renders the real mesh with Three.js, lit to match: dark floor, warm key light, soft shadow.
+- Faint watercolor washes (Foundations → Texture / Watercolor wash / sage, clay, moss) sit behind the page background for a little warmth: about 30% opacity on the landing hero, and only in the gutters around the cards on app screens. They never go in the viewport, behind diff or merge colors, or over text that needs contrast.
