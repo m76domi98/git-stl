@@ -16,7 +16,9 @@ async function main(): Promise<void> {
   const events = createCommitEvents()
   const auth = await loadAuth({ config, db: pool, storage, events })
   if (config.authMode === 'dev') {
-    console.warn('WARNING: AUTH_MODE=dev. Every request is signed in as the dev user. Local use only.')
+    console.warn(
+      'WARNING: AUTH_MODE=dev. Every request is signed in as the dev user. Local use only.',
+    )
   }
 
   const app = createApp({
@@ -26,6 +28,7 @@ async function main(): Promise<void> {
     geometry: createGeometryClient(config.geometryServiceUrl),
     storage,
     events,
+    quotas: config.quotas,
   })
   app.listen(config.port, () => {
     process.stdout.write(`Backend running on port ${config.port}\n`)

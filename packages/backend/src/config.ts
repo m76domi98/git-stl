@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
+
+const MB = 1024 * 1024
+const cap = (fallback: number) => z.coerce.number().int().min(1).default(fallback)
 
 const envSchema = z
   .object({
@@ -14,6 +18,10 @@ const envSchema = z
     UPLOADS_DIR: z.string().min(1).default('/app/uploads'),
     // 'github' loads the local auth module; 'dev' uses the built-in stub (never in production).
     AUTH_MODE: z.enum(['github', 'dev']).default('github'),
+    // Per-user spending caps.
+    QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB),
+    QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay),
+    QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects),
   })
   .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
     message: 'AUTH_MODE=dev is not allowed when NODE_ENV=production',
@@ -28,6 +36,7 @@ export interface Config {
   readonly geometryServiceUrl: string
   readonly uploadsDir: string
   readonly authMode: 'github' | 'dev'
+  readonly quotas: Quotas
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -45,5 +54,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     geometryServiceUrl: e.GEOMETRY_SERVICE_URL,
     uploadsDir: e.UPLOADS_DIR,
     authMode: e.AUTH_MODE,
+    quotas: Object.freeze({
+      maxStorageBytes: e.QUOTA_STORAGE_MB * MB,
+      maxUploadsPerDay: e.QUOTA_UPLOADS_PER_DAY,
+      maxProjects: e.QUOTA_PROJECTS,
+    }),
   })
 }

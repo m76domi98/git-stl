@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { loadConfig } from './config.js'
+import { DEFAULT_QUOTAS } from './shared/quotas.js'
 
 const base = { DATABASE_URL: 'postgres://u:p@localhost:5432/db' }
 
@@ -15,6 +16,7 @@ describe('loadConfig', () => {
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',
       authMode: 'github',
+      quotas: DEFAULT_QUOTAS,
     })
   })
 
@@ -57,6 +59,24 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...base, FRONTEND_URL: 'http://localhost:5173/' }).frontendUrl).toBe(
       'http://localhost:5173',
     )
+  })
+
+  it('reads spending caps, with storage in megabytes', () => {
+    const config = loadConfig({
+      ...base,
+      QUOTA_STORAGE_MB: '10',
+      QUOTA_UPLOADS_PER_DAY: '5',
+      QUOTA_PROJECTS: '3',
+    })
+    expect(config.quotas).toEqual({
+      maxStorageBytes: 10 * 1024 * 1024,
+      maxUploadsPerDay: 5,
+      maxProjects: 3,
+    })
+  })
+
+  it('rejects a spending cap below 1', () => {
+    expect(() => loadConfig({ ...base, QUOTA_PROJECTS: '0' })).toThrow(/QUOTA_PROJECTS/)
   })
 
   it('returns a frozen object', () => {
