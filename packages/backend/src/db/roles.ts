@@ -21,32 +21,34 @@ export async function ensureRuntimeRoles(pool: Pool, passwords: RuntimePasswords
     [APP_ROLE, passwords.app],
     [AUTH_ROLE, passwords.auth],
   ]
-  for (const [role, password] of logins) {
-    await pool.query(`
-      DO $$ BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${role}') THEN
-          CREATE ROLE ${role};
-        END IF;
-      END $$;
-    `)
-    // DDL can't take $1 parameters, so format() quotes the name and password.
-    await runFormatted(
-      pool,
-      `SELECT format('ALTER ROLE %I WITH LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE
-                      NOREPLICATION NOINHERIT PASSWORD %L', $1::text, $2::text) AS sql`,
-      [role, password],
-    )
-    await runFormatted(
-      pool,
-      `SELECT format('REVOKE %I FROM %I', r.rolname, $1::text) AS sql
-       FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.roleid
-       WHERE m.member = (SELECT oid FROM pg_roles WHERE rolname = $1::text)`,
-      [role],
-    )
-  }
+  for (const [role, password] of logins) await resetLogin(pool, role, password)
   // Lets the migration login check policies with SET ROLE in tests. This makes the
   // migration login a member of the app role, never the other way round.
   await pool.query(`GRANT ${APP_ROLE} TO CURRENT_USER`)
+}
+
+/** Creates `role` if needed and strips it back to a plain login with `password`. */
+export async function resetLogin(pool: Pool, role: string, password: string): Promise<void> {
+  // DDL can't take $1 parameters, so format() quotes the name and password.
+  await runFormatted(
+    pool,
+    `SELECT format('CREATE ROLE %I', $1::text) AS sql
+     WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1::text)`,
+    [role],
+  )
+  await runFormatted(
+    pool,
+    `SELECT format('ALTER ROLE %I WITH LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE
+                    NOREPLICATION NOINHERIT PASSWORD %L', $1::text, $2::text) AS sql`,
+    [role, password],
+  )
+  await runFormatted(
+    pool,
+    `SELECT format('REVOKE %I FROM %I', r.rolname, $1::text) AS sql
+     FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.roleid
+     WHERE m.member = (SELECT oid FROM pg_roles WHERE rolname = $1::text)`,
+    [role],
+  )
 }
 
 /** Runs each statement a `format()` query builds. */
