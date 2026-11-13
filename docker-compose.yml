@@ -26,6 +26,7 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
       GEOMETRY_SERVICE_URL: http://geometry:8000
       # Local stack: development mode, ports bound to 127.0.0.1 unless BIND_ADDR says otherwise.
       NODE_ENV: ${NODE_ENV:-development}

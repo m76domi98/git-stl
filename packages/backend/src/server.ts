@@ -11,7 +11,7 @@ import { createMeshStorage } from './shared/storage.js'
 
 async function main(): Promise<void> {
   const config = loadConfig()
-  await migrate(pool, { appPassword: config.appDbPassword })
+  await migrate(pool, { app: config.appDbPassword, auth: config.authDbPassword })
 
   const storage = createMeshStorage(config.uploadsDir)
   const events = createCommitEvents()

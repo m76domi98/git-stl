@@ -1,6 +1,6 @@
 import type { Pool, PoolClient, QueryResultRow } from 'pg'
 import { AppError } from '../shared/http/errors.js'
-import { APP_ROLE } from './row-security.js'
+import { APP_ROLE } from './roles.js'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

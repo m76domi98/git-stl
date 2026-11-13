@@ -5,6 +5,7 @@ import { DEFAULT_QUOTAS } from './shared/quotas.js'
 const base = {
   DATABASE_URL: 'postgres://u:p@localhost:5432/db',
   APP_DB_PASSWORD: 'test-app-password-0123',
+  AUTH_DB_PASSWORD: 'test-auth-password-0123',
 }
 
 describe('loadConfig', () => {
@@ -16,6 +17,7 @@ describe('loadConfig', () => {
       port: 3001,
       databaseUrl: base.DATABASE_URL,
       appDbPassword: base.APP_DB_PASSWORD,
+      authDbPassword: base.AUTH_DB_PASSWORD,
       frontendUrl: 'http://localhost:5173',
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',

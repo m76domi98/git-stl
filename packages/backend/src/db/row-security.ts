@@ -1,26 +1,15 @@
 import type { Pool } from 'pg'
+import { APP_ROLE, AUTH_ROLE } from './roles.js'
 
 /**
- * The restricted role request queries run as. It is not a superuser and does
- * not own the tables, so Postgres applies the row level security policies below.
- * Auth and migrations keep using the connection's own role.
+ * Grants and row level security for the runtime logins. Neither login owns
+ * the tables, so Postgres applies every policy below to them.
  */
-export const APP_ROLE = 'meshgit_app'
-
-export async function applyRowSecurity(pool: Pool, appPassword: string): Promise<void> {
+export async function applyRowSecurity(pool: Pool): Promise<void> {
   await pool.query(`
-    DO $$ BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_ROLE}') THEN
-        CREATE ROLE ${APP_ROLE} NOLOGIN NOSUPERUSER NOBYPASSRLS;
-      END IF;
-    END $$;
-    GRANT ${APP_ROLE} TO CURRENT_USER;
-    GRANT USAGE ON SCHEMA public TO ${APP_ROLE};
-
-    -- Least privilege: only what the API needs today.
-    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes FROM ${APP_ROLE};
-    GRANT SELECT (id, github_username, github_avatar) ON users TO ${APP_ROLE};
-    GRANT SELECT, INSERT ON projects, commits, meshes TO ${APP_ROLE};
+    -- Runtime logins can use the schema but never create objects in it.
+    REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+    GRANT USAGE ON SCHEMA public TO ${APP_ROLE}, ${AUTH_ROLE};
 
     CREATE OR REPLACE FUNCTION app_user_id() RETURNS uuid LANGUAGE sql STABLE AS
       $f$ SELECT NULLIF(current_setting('app.user_id', true), '')::uuid $f$;
@@ -34,6 +23,17 @@ export async function applyRowSecurity(pool: Pool, appPassword: string): Promise
     ALTER TABLE meshes ENABLE ROW LEVEL SECURITY;
     ALTER TABLE commits ENABLE ROW LEVEL SECURITY;
     ALTER TABLE cli_auth_codes ENABLE ROW LEVEL SECURITY;
+  `)
+  await applyAppGrants(pool)
+  await applyAuthGrants(pool)
+}
+
+/** Request queries: read and create the signed-in user's own rows, nothing else. */
+async function applyAppGrants(pool: Pool): Promise<void> {
+  await pool.query(`
+    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes FROM ${APP_ROLE};
+    GRANT SELECT (id, github_username, github_avatar) ON users TO ${APP_ROLE};
+    GRANT SELECT, INSERT ON projects, commits, meshes TO ${APP_ROLE};
 
     DROP POLICY IF EXISTS users_self ON users;
     CREATE POLICY users_self ON users FOR SELECT TO ${APP_ROLE}
@@ -61,12 +61,33 @@ export async function applyRowSecurity(pool: Pool, appPassword: string): Promise
     CREATE POLICY meshes_insert ON meshes FOR INSERT TO ${APP_ROLE}
       WITH CHECK (owner_id = app_user_id());
   `)
+}
 
-  // The app role logs in on its own, so request queries never hold superuser rights.
-  // DDL can't take $1 parameters, so format() quotes the password as a literal.
-  const { rows } = await pool.query<{ sql: string }>(
-    "SELECT format('ALTER ROLE %I WITH LOGIN PASSWORD %L', $1::text, $2::text) AS sql",
-    [APP_ROLE, appPassword],
-  )
-  await pool.query(rows[0]!.sql)
+/**
+ * The login flow runs before anyone is signed in, so its policies can't key on
+ * a user. Grants keep it to exactly the statements it runs: sign-in upserts,
+ * logout, CLI login codes, and linking a project to a GitHub repo. It can't
+ * create, delete, or touch meshes, and never sees mesh files.
+ */
+async function applyAuthGrants(pool: Pool): Promise<void> {
+  await pool.query(`
+    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes FROM ${AUTH_ROLE};
+    GRANT SELECT, INSERT ON users TO ${AUTH_ROLE};
+    GRANT UPDATE (github_username, github_avatar, email, github_access_token, tokens_invalidated_at)
+      ON users TO ${AUTH_ROLE};
+    GRANT SELECT, INSERT, DELETE ON cli_auth_codes TO ${AUTH_ROLE};
+    GRANT UPDATE (jwt) ON cli_auth_codes TO ${AUTH_ROLE};
+    GRANT SELECT ON projects, commits TO ${AUTH_ROLE};
+    GRANT UPDATE (github_repo_owner, github_repo_name) ON projects TO ${AUTH_ROLE};
+
+    DROP POLICY IF EXISTS users_auth ON users;
+    CREATE POLICY users_auth ON users FOR ALL TO ${AUTH_ROLE} USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS cli_auth_codes_auth ON cli_auth_codes;
+    CREATE POLICY cli_auth_codes_auth ON cli_auth_codes FOR ALL TO ${AUTH_ROLE}
+      USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS projects_auth ON projects;
+    CREATE POLICY projects_auth ON projects FOR ALL TO ${AUTH_ROLE} USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS commits_auth ON commits;
+    CREATE POLICY commits_auth ON commits FOR SELECT TO ${AUTH_ROLE} USING (true);
+  `)
 }

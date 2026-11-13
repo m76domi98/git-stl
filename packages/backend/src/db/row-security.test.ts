@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import pool from './pool.js'
-import { APP_ROLE } from './row-security.js'
+import { APP_ROLE } from './roles.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 
 const PERMISSION_DENIED = '42501'

@@ -1,5 +1,5 @@
 import pg from 'pg'
-import { APP_ROLE } from './row-security.js'
+import { APP_ROLE } from './roles.js'
 
 /**
  * The connection string for request queries: same host and database as the

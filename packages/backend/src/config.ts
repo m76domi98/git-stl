@@ -11,6 +11,8 @@ const envSchema = z
     DATABASE_URL: z.string().min(1),
     // Password for the restricted meshgit_app login that request queries use.
     APP_DB_PASSWORD: z.string().min(16, 'must be at least 16 characters'),
+    // Password for the meshgit_auth login that the login flow and GitHub sync use.
+    AUTH_DB_PASSWORD: z.string().min(16, 'must be at least 16 characters'),
     FRONTEND_URL: z
       .string()
       .url()
@@ -35,6 +37,7 @@ export interface Config {
   readonly port: number
   readonly databaseUrl: string
   readonly appDbPassword: string
+  readonly authDbPassword: string
   readonly frontendUrl: string
   readonly geometryServiceUrl: string
   readonly uploadsDir: string
@@ -54,6 +57,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     port: e.PORT,
     databaseUrl: e.DATABASE_URL,
     appDbPassword: e.APP_DB_PASSWORD,
+    authDbPassword: e.AUTH_DB_PASSWORD,
     frontendUrl: e.FRONTEND_URL,
     geometryServiceUrl: e.GEOMETRY_SERVICE_URL,
     uploadsDir: e.UPLOADS_DIR,
