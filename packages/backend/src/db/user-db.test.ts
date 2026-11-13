@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import pool from './pool.js'
 import { createUserDb } from './user-db.js'
+import { appPool } from '../test/app-pool.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 
-const userDb = createUserDb(pool)
+const userDb = createUserDb(appPool)
 
 let alice: string
 let bob: string
@@ -30,13 +31,17 @@ describe('createUserDb', () => {
     expect(rows.map((r) => r.owner_id)).toEqual([alice])
   })
 
-  it('runs as the restricted role, not the connection role', async () => {
+  it('runs as the restricted role', async () => {
     const [row] = await userDb.query<{ role: string }>(alice, 'SELECT current_user AS role')
     expect(row?.role).toBe('meshgit_app')
   })
 
+  it('refuses to run on a connection that is not the app login', async () => {
+    await expect(createUserDb(pool).query(alice, 'SELECT 1')).rejects.toThrow(/meshgit_app/)
+  })
+
   it('rejects a user id that is not a uuid before touching the database', async () => {
-    const connect = vi.spyOn(pool, 'connect')
+    const connect = vi.spyOn(appPool, 'connect')
     await expect(userDb.query('not-a-uuid', 'SELECT 1')).rejects.toMatchObject({ status: 401 })
     expect(connect).not.toHaveBeenCalled()
     connect.mockRestore()
