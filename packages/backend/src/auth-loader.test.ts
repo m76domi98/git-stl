@@ -8,7 +8,12 @@ import { fakeAuth } from './test/fake-auth.js'
 
 function context(authMode: 'dev' | 'github'): AuthModuleContext {
   return {
-    config: loadConfig({ DATABASE_URL: 'postgres://x', AUTH_MODE: authMode, NODE_ENV: 'test' }),
+    config: loadConfig({
+      DATABASE_URL: 'postgres://x',
+      APP_DB_PASSWORD: 'test-app-password-0123',
+      AUTH_MODE: authMode,
+      NODE_ENV: 'test',
+    }),
     db: {} as Pool,
     storage: {} as MeshStorage,
     events: createCommitEvents(),

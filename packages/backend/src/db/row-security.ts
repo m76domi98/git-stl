@@ -7,7 +7,7 @@ import type { Pool } from 'pg'
  */
 export const APP_ROLE = 'meshgit_app'
 
-export async function applyRowSecurity(pool: Pool): Promise<void> {
+export async function applyRowSecurity(pool: Pool, appPassword: string): Promise<void> {
   await pool.query(`
     DO $$ BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${APP_ROLE}') THEN
@@ -61,4 +61,12 @@ export async function applyRowSecurity(pool: Pool): Promise<void> {
     CREATE POLICY meshes_insert ON meshes FOR INSERT TO ${APP_ROLE}
       WITH CHECK (owner_id = app_user_id());
   `)
+
+  // The app role logs in on its own, so request queries never hold superuser rights.
+  // DDL can't take $1 parameters, so format() quotes the password as a literal.
+  const { rows } = await pool.query<{ sql: string }>(
+    "SELECT format('ALTER ROLE %I WITH LOGIN PASSWORD %L', $1::text, $2::text) AS sql",
+    [APP_ROLE, appPassword],
+  )
+  await pool.query(rows[0]!.sql)
 }

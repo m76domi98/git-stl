@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { loadConfig } from './config.js'
 import { DEFAULT_QUOTAS } from './shared/quotas.js'
 
-const base = { DATABASE_URL: 'postgres://u:p@localhost:5432/db' }
+const base = {
+  DATABASE_URL: 'postgres://u:p@localhost:5432/db',
+  APP_DB_PASSWORD: 'test-app-password-0123',
+}
 
 describe('loadConfig', () => {
   it('applies defaults for optional settings', () => {
@@ -12,6 +15,7 @@ describe('loadConfig', () => {
       nodeEnv: 'development',
       port: 3001,
       databaseUrl: base.DATABASE_URL,
+      appDbPassword: base.APP_DB_PASSWORD,
       frontendUrl: 'http://localhost:5173',
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',
@@ -39,6 +43,11 @@ describe('loadConfig', () => {
 
   it('rejects a missing DATABASE_URL', () => {
     expect(() => loadConfig({})).toThrow(/DATABASE_URL/)
+  })
+
+  it('rejects a missing or short APP_DB_PASSWORD', () => {
+    expect(() => loadConfig({ DATABASE_URL: base.DATABASE_URL })).toThrow(/APP_DB_PASSWORD/)
+    expect(() => loadConfig({ ...base, APP_DB_PASSWORD: 'short' })).toThrow(/APP_DB_PASSWORD/)
   })
 
   it('rejects an unknown AUTH_MODE', () => {
