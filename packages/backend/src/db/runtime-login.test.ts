@@ -52,6 +52,22 @@ describe("the runtime login keeps user A out of user B's projects", () => {
     expect(rows).toEqual([{ name: 'bob-part' }])
   })
 
+  it("refuses a commit that points at B's mesh", async () => {
+    const { rows } = await adminPool.query<{ id: string }>(
+      'INSERT INTO meshes (id, owner_id) VALUES (gen_random_uuid(), $1) RETURNING id',
+      [bob],
+    )
+    const aliceProject = await userDb.query<{ id: string }>(alice, 'SELECT id FROM projects')
+    await expect(
+      userDb.query(
+        alice,
+        'INSERT INTO commits (project_id, mesh_id, author_id) VALUES ($1, $2, $3)',
+        [aliceProject[0]!.id, rows[0]!.id, alice],
+      ),
+    ).rejects.toMatchObject({ code: PERMISSION_DENIED })
+    await adminPool.query('DELETE FROM meshes WHERE id = $1', [rows[0]!.id])
+  })
+
   it('refuses to create a project owned by B', async () => {
     await expect(
       userDb.query(alice, "INSERT INTO projects (owner_id, name) VALUES ($1, 'planted')", [bob]),
@@ -61,6 +77,12 @@ describe("the runtime login keeps user A out of user B's projects", () => {
 
 describe('the runtime login cannot gain more privilege', () => {
   const migrationRole = new URL(process.env.DATABASE_URL!).username
+
+  it('cannot create a temporary table that would shadow a real one', async () => {
+    await expect(appPool.query('CREATE TEMP TABLE projects (id uuid)')).rejects.toMatchObject({
+      code: PERMISSION_DENIED,
+    })
+  })
 
   it.each([
     ['SET ROLE', `SET ROLE "${migrationRole}"`],

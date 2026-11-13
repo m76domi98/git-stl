@@ -10,14 +10,28 @@ import { loginUrl } from '../test/runtime-pools.js'
 const ROLE = 'meshgit_reset_check'
 
 afterAll(async () => {
+  const { rows } = await adminPool.query<{ sql: string }>(
+    "SELECT format('REVOKE CONNECT ON DATABASE %I FROM %I', current_database(), $1::text) AS sql",
+    [ROLE],
+  )
+  await adminPool.query(rows[0]!.sql)
   await adminPool.query(`DROP ROLE IF EXISTS ${ROLE}`)
   await adminPool.end()
 })
+
+async function grantConnect(role: string): Promise<void> {
+  const { rows } = await adminPool.query<{ sql: string }>(
+    "SELECT format('GRANT CONNECT ON DATABASE %I TO %I', current_database(), $1::text) AS sql",
+    [role],
+  )
+  await adminPool.query(rows[0]!.sql)
+}
 
 describe('resetLogin', () => {
   it('creates a login that passes the least-privilege check', async () => {
     const password = randomUUID()
     await resetLogin(adminPool, ROLE, password)
+    await grantConnect(ROLE)
     const pool = new pg.Pool({
       connectionString: loginUrl(process.env.DATABASE_URL!, ROLE, password),
     })

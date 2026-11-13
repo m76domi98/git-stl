@@ -34,6 +34,9 @@ describe('assertRuntimeLogin', () => {
     )
     await adminPool.query(rows[0]!.sql)
     await adminPool.query(`GRANT ${APP_ROLE} TO ${role}`)
+    await adminPool.query(
+      `GRANT CONNECT ON DATABASE "${new URL(process.env.DATABASE_URL!).pathname.slice(1)}" TO ${role}`,
+    )
     const pool = new pg.Pool({
       connectionString: loginUrl(process.env.DATABASE_URL!, role, password),
     })
@@ -43,6 +46,7 @@ describe('assertRuntimeLogin', () => {
       )
     } finally {
       await pool.end()
+      await adminPool.query(`DROP OWNED BY ${role}`)
       await adminPool.query(`DROP ROLE ${role}`)
     }
   })

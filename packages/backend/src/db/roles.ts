@@ -39,8 +39,18 @@ export async function resetLogin(pool: Pool, role: string, password: string): Pr
   await runFormatted(
     pool,
     `SELECT format('ALTER ROLE %I WITH LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE
-                    NOREPLICATION NOINHERIT PASSWORD %L', $1::text, $2::text) AS sql`,
+                    NOREPLICATION NOINHERIT CONNECTION LIMIT -1 VALID UNTIL ''infinity''
+                    PASSWORD %L', $1::text, $2::text) AS sql`,
     [role, password],
+  )
+  // Drop any per-role settings, then pin search_path with pg_temp last so a
+  // temporary table can never shadow a real one.
+  await runFormatted(
+    pool,
+    `SELECT format('ALTER ROLE %I RESET ALL', $1::text) AS sql
+     UNION ALL
+     SELECT format('ALTER ROLE %I SET search_path = pg_catalog, public, pg_temp', $1::text)`,
+    [role],
   )
   await runFormatted(
     pool,
