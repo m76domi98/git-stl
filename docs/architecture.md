@@ -24,11 +24,12 @@ How MeshGit fits together today. For where it's heading, see the [roadmap](roadm
 
 ```
 packages/backend/src/
-  server.ts          entry point: config → migrate → wire dependencies → listen
+  server.ts          entry point: config → check the runtime logins → wire dependencies → listen
+  migrate-cli.ts     separate migrate command, the only code that uses the schema owner's login
   app.ts             createApp(deps): middleware + routers, no listen (tests drive it directly)
   config.ts          environment, validated with zod in one place
   auth-loader.ts     picks the auth module from AUTH_MODE
-  db/                pool + migrations
+  db/                migrations, runtime roles, row level security, UserDb
   features/
     projects/        projects.{routes,service,repository,types}.ts + tests
     commits/         same shape, plus commit-events.ts (after-commit hooks)
