@@ -52,6 +52,35 @@ describe('hardening', () => {
   })
 })
 
+describe('authentication', () => {
+  const SOME_ID = '00000000-0000-4000-8000-0000000000aa'
+  const PROTECTED_ROUTES: Array<['get' | 'post', string]> = [
+    ['get', '/api/projects'],
+    ['post', '/api/projects'],
+    ['get', `/api/projects/${SOME_ID}`],
+    ['get', `/api/commits?project_id=${SOME_ID}`],
+    ['post', '/api/commits'],
+    ['get', `/api/commits/${SOME_ID}/file`],
+    ['get', '/api/diff'],
+    ['post', '/api/merge'],
+  ]
+
+  it.each(PROTECTED_ROUTES)('%s %s rejects requests without a user', async (method, path) => {
+    const res = await request(testApp())[method](path)
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+  })
+
+  it('rejects an upload without a user before reading the file', async () => {
+    const res = await request(testApp())
+      .post('/api/commits')
+      .field('project_id', SOME_ID)
+      .field('message', 'sneaky')
+      .attach('file', Buffer.from('solid x\nendsolid x\n'), 'x.stl')
+    expect(res.status).toBe(401)
+  })
+})
+
 describe('unbuilt features', () => {
   it('answer 501 behind auth', async () => {
     const app = testApp()
