@@ -29,6 +29,7 @@ const envSchema = z
     // Per-user spending caps.
     QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB),
     QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay),
+    QUOTA_PROCESSING_PER_DAY: cap(DEFAULT_QUOTAS.maxProcessingPerDay),
     QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects),
   })
   .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
@@ -69,6 +70,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     quotas: Object.freeze({
       maxStorageBytes: e.QUOTA_STORAGE_MB * MB,
       maxUploadsPerDay: e.QUOTA_UPLOADS_PER_DAY,
+      maxProcessingPerDay: e.QUOTA_PROCESSING_PER_DAY,
       maxProjects: e.QUOTA_PROJECTS,
     }),
   })

@@ -92,6 +92,17 @@ export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<
       ON commits (project_id, created_at DESC);
   `)
 
+  // One row per mesh cleaning started, for the daily processing budget.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS processing_attempts (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS processing_attempts_user_created_idx
+      ON processing_attempts (user_id, created_at DESC);
+  `)
+
   await ensureRuntimeRoles(pool, passwords)
   await applyRowSecurity(pool)
 }

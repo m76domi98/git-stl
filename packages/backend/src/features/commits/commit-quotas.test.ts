@@ -2,8 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import request from 'supertest'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import pool from '../../test/admin-pool.js'
+import { AppError } from '../../shared/http/errors.js'
 import { DEFAULT_QUOTAS, type Quotas } from '../../shared/quotas.js'
 import { createMeshStorage } from '../../shared/storage.js'
 import { TEST_USER_HEADER } from '../../test/fake-auth.js'
@@ -25,10 +26,22 @@ afterAll(async () => {
   await rm(uploadsDir, { recursive: true, force: true })
 })
 
-async function setup(quotas: Partial<Quotas>) {
+/** A geometry client whose first `failures` cleans reject, like a broken file would. */
+function flakyGeometry(failures: number) {
+  const geometry = fakeGeometry()
+  const succeed = geometry.clean
+  let calls = 0
+  geometry.clean = vi.fn(async (file: Buffer) => {
+    calls += 1
+    if (calls <= failures) throw new AppError(422, 'Mesh cleaning failed')
+    return succeed(file)
+  })
+  return geometry
+}
+
+async function setup(quotas: Partial<Quotas>, geometry = fakeGeometry()) {
   const user = await createUser(pool)
   users.push(user)
-  const geometry = fakeGeometry()
   const app = testApp({
     storage: createMeshStorage(uploadsDir),
     geometry,
@@ -77,5 +90,43 @@ describe('upload spending caps', () => {
     expect(second.status).toBe(403)
     expect(second.body.error).toBe('Storage limit reached')
     expect(geometry.clean).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('daily processing budget', () => {
+  it('counts failed cleans, so broken files use up the budget too', async () => {
+    const { upload, geometry } = await setup({ maxProcessingPerDay: 2 }, flakyGeometry(2))
+
+    expect((await upload()).status).toBe(422)
+    expect((await upload()).status).toBe(422)
+    const third = await upload()
+
+    expect(third.status).toBe(429)
+    expect(third.body.error).toBe('Daily processing limit reached')
+    expect(geometry.clean).toHaveBeenCalledTimes(2)
+  })
+
+  it('leaves failed cleans out of the daily upload limit', async () => {
+    const { upload } = await setup(
+      { maxUploadsPerDay: 1, maxProcessingPerDay: 5 },
+      flakyGeometry(1),
+    )
+
+    expect((await upload()).status).toBe(422)
+    expect((await upload()).status).toBe(201)
+    const third = await upload()
+
+    expect(third.status).toBe(429)
+    expect(third.body.error).toBe('Daily upload limit reached')
+  })
+
+  it('holds the budget when uploads arrive at the same time', async () => {
+    const { upload, geometry } = await setup({ maxProcessingPerDay: 2 })
+
+    const results = await Promise.all(Array.from({ length: 5 }, () => upload()))
+
+    expect(results.filter((r) => r.status === 201)).toHaveLength(2)
+    expect(results.filter((r) => r.status === 429)).toHaveLength(3)
+    expect(geometry.clean).toHaveBeenCalledTimes(2)
   })
 })

@@ -72,11 +72,13 @@ describe('loadConfig', () => {
       ...base,
       QUOTA_STORAGE_MB: '10',
       QUOTA_UPLOADS_PER_DAY: '5',
+      QUOTA_PROCESSING_PER_DAY: '7',
       QUOTA_PROJECTS: '3',
     })
     expect(config.quotas).toEqual({
       maxStorageBytes: 10 * 1024 * 1024,
       maxUploadsPerDay: 5,
+      maxProcessingPerDay: 7,
       maxProjects: 3,
     })
   })

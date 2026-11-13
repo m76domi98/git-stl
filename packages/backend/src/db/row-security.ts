@@ -23,6 +23,7 @@ export async function applyRowSecurity(pool: Pool): Promise<void> {
     ALTER TABLE meshes ENABLE ROW LEVEL SECURITY;
     ALTER TABLE commits ENABLE ROW LEVEL SECURITY;
     ALTER TABLE cli_auth_codes ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE processing_attempts ENABLE ROW LEVEL SECURITY;
   `)
   await applyAppGrants(pool)
   await applyAuthGrants(pool)
@@ -31,9 +32,15 @@ export async function applyRowSecurity(pool: Pool): Promise<void> {
 /** Request queries: read and create the signed-in user's own rows, nothing else. */
 async function applyAppGrants(pool: Pool): Promise<void> {
   await pool.query(`
-    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes FROM ${APP_ROLE};
+    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes, processing_attempts
+      FROM ${APP_ROLE};
     GRANT SELECT (id, github_username, github_avatar) ON users TO ${APP_ROLE};
-    GRANT SELECT, INSERT ON projects, commits, meshes TO ${APP_ROLE};
+    GRANT SELECT, INSERT ON projects, commits, meshes, processing_attempts TO ${APP_ROLE};
+
+    DROP POLICY IF EXISTS processing_attempts_owner ON processing_attempts;
+    CREATE POLICY processing_attempts_owner ON processing_attempts FOR ALL TO ${APP_ROLE}
+      USING (user_id = app_user_id())
+      WITH CHECK (user_id = app_user_id());
 
     DROP POLICY IF EXISTS users_self ON users;
     CREATE POLICY users_self ON users FOR SELECT TO ${APP_ROLE}
@@ -71,7 +78,8 @@ async function applyAppGrants(pool: Pool): Promise<void> {
  */
 async function applyAuthGrants(pool: Pool): Promise<void> {
   await pool.query(`
-    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes FROM ${AUTH_ROLE};
+    REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes, processing_attempts
+      FROM ${AUTH_ROLE};
     GRANT SELECT, INSERT ON users TO ${AUTH_ROLE};
     GRANT UPDATE (github_username, github_avatar, email, github_access_token, tokens_invalidated_at)
       ON users TO ${AUTH_ROLE};

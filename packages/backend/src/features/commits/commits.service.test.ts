@@ -26,7 +26,8 @@ function service(commits: Partial<CommitsRepository>) {
     geometry: fakeGeometry(),
     storage,
     events: createCommitEvents(),
-    quotas: { maxStorageBytes: 1000, maxUploadsPerDay: 10 },
+    processing: { claim: vi.fn(async () => true) },
+    quotas: { maxStorageBytes: 1000, maxUploadsPerDay: 10, maxProcessingPerDay: 10 },
   })
   return { svc, storage }
 }
