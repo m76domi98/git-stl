@@ -58,3 +58,6 @@ packages/frontend/src/context/AuthContext.jsx
 
 # Test coverage reports
 coverage/
+
+# Local design reference screenshots
+docs/design/possible/

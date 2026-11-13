@@ -4,6 +4,9 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 
 ## 2026-11-13
 
+### Tooling
+- Local design reference screenshots in `docs/design/possible/` are now ignored by git.
+
 ### Backend
 - The web app no longer has the database owner's login. Migrations run as their own command (a one-shot `migrate` service in Docker Compose), and the server only connects with two least-privilege logins: `meshgit_app` for requests and `meshgit_auth` for sign-in. It refuses to start if either is missing or has more rights than it needs.
 - A daily processing budget (`QUOTA_PROCESSING_PER_DAY`) that counts every mesh cleaning started, including failures, so broken files can't be used to burn geometry CPU. The daily upload limit still counts only successful commits.
