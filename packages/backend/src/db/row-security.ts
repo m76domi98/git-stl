@@ -101,7 +101,10 @@ async function applyAuthGrants(pool: Pool): Promise<void> {
   await pool.query(`
     REVOKE ALL ON users, projects, meshes, commits, cli_auth_codes, processing_attempts
       FROM ${AUTH_ROLE};
-    GRANT SELECT, INSERT ON users TO ${AUTH_ROLE};
+    -- Every users column but the GitHub token, which sign-in can write but not read.
+    GRANT INSERT ON users TO ${AUTH_ROLE};
+    GRANT SELECT (id, github_id, github_username, github_avatar, email, tokens_invalidated_at,
+                  created_at) ON users TO ${AUTH_ROLE};
     GRANT UPDATE (github_username, github_avatar, email, github_access_token, tokens_invalidated_at)
       ON users TO ${AUTH_ROLE};
     GRANT SELECT, INSERT, DELETE ON cli_auth_codes TO ${AUTH_ROLE};
@@ -109,6 +112,15 @@ async function applyAuthGrants(pool: Pool): Promise<void> {
     GRANT SELECT ON projects TO ${AUTH_ROLE};
     GRANT UPDATE (github_repo_owner, github_repo_name) ON projects TO ${AUTH_ROLE};
     GRANT SELECT (id, project_id, mesh_id, message, created_at) ON commits TO ${AUTH_ROLE};
+
+    -- The only way to read a token: the signed-in user's own, under a signed user
+    -- id (see user-context.ts). SQL injected into sign-in can't sign, so it gets null.
+    CREATE OR REPLACE FUNCTION github_access_token() RETURNS text
+      LANGUAGE sql STABLE SECURITY DEFINER
+      SET search_path = pg_catalog, public
+    AS $f$ SELECT u.github_access_token FROM public.users u WHERE u.id = public.app_user_id() $f$;
+    REVOKE ALL ON FUNCTION github_access_token() FROM PUBLIC;
+    GRANT EXECUTE ON FUNCTION github_access_token() TO ${AUTH_ROLE};
 
     -- One policy per command, so a future grant can't quietly widen access.
     DROP POLICY IF EXISTS users_auth ON users;
