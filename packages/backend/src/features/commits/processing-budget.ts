@@ -16,6 +16,12 @@ export function createProcessingBudget(db: UserDb): ProcessingBudget {
     claim: (userId, maxPerDay) =>
       db.transaction(userId, async (tx) => {
         await lockUser(tx, userId)
+        // Keeps the table small. The window below is 1 day, so these never count.
+        await tx.query(
+          `DELETE FROM processing_attempts
+           WHERE user_id = $1 AND created_at < NOW() - INTERVAL '2 days'`,
+          [userId],
+        )
         const { rows } = await tx.query<{ attempts: number }>(
           `SELECT COUNT(*)::int AS attempts FROM processing_attempts
            WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 day'`,

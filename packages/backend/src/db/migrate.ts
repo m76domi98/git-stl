@@ -101,6 +101,8 @@ export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<
     );
     CREATE INDEX IF NOT EXISTS processing_attempts_user_created_idx
       ON processing_attempts (user_id, created_at DESC);
+    -- Users who stopped uploading never prune their own rows, so sweep them here.
+    DELETE FROM processing_attempts WHERE created_at < NOW() - INTERVAL '2 days';
   `)
 
   await ensureRuntimeRoles(pool, passwords)

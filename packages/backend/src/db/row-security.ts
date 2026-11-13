@@ -46,10 +46,19 @@ async function applyAppGrants(pool: Pool): Promise<void> {
     GRANT SELECT (id, github_username, github_avatar) ON users TO ${APP_ROLE};
     GRANT SELECT, INSERT ON projects, commits, meshes, processing_attempts TO ${APP_ROLE};
 
+    -- Attempts can be read and added by their owner, and deleted only once they're
+    -- too old to count, so pruning can never reset the daily budget.
+    GRANT DELETE ON processing_attempts TO ${APP_ROLE};
     DROP POLICY IF EXISTS processing_attempts_owner ON processing_attempts;
-    CREATE POLICY processing_attempts_owner ON processing_attempts FOR ALL TO ${APP_ROLE}
-      USING (user_id = app_user_id())
+    DROP POLICY IF EXISTS processing_attempts_read ON processing_attempts;
+    DROP POLICY IF EXISTS processing_attempts_insert ON processing_attempts;
+    DROP POLICY IF EXISTS processing_attempts_prune ON processing_attempts;
+    CREATE POLICY processing_attempts_read ON processing_attempts FOR SELECT TO ${APP_ROLE}
+      USING (user_id = app_user_id());
+    CREATE POLICY processing_attempts_insert ON processing_attempts FOR INSERT TO ${APP_ROLE}
       WITH CHECK (user_id = app_user_id());
+    CREATE POLICY processing_attempts_prune ON processing_attempts FOR DELETE TO ${APP_ROLE}
+      USING (user_id = app_user_id() AND created_at < NOW() - INTERVAL '2 days');
 
     DROP POLICY IF EXISTS users_self ON users;
     CREATE POLICY users_self ON users FOR SELECT TO ${APP_ROLE}
