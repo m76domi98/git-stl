@@ -102,6 +102,24 @@ Every data query filters on the authenticated user, so other users' projects ret
 - The container runs as a non-root user.
 - The Docker build context is an allow-list, so `.env` and other local files never reach the image.
 
+## Database access
+
+Three Postgres logins, each with only what it needs:
+
+| Login | Used by | Can do |
+| --- | --- | --- |
+| schema owner (`POSTGRES_USER`) | `migrate` command only | Everything. The web app never gets it. |
+| `meshgit_app` | Request queries, via `UserDb` | Read and create the signed-in user's own projects, commits, meshes and processing attempts. No updates, deletes, tokens or login codes. |
+| `meshgit_auth` | Sign-in and GitHub sync | Sign-in upserts, logout, CLI login codes, and linking a project to a GitHub repo. No creates or deletes on projects, and no meshes. |
+
+- Each migration resets both runtime logins: no superuser, `BYPASSRLS`, role or database creation, and no role memberships, so neither can `SET ROLE` into anything stronger. Neither owns a table, so row level security always applies.
+- The server checks both logins at startup and refuses to run if either is missing, logs in as the wrong role, or has more rights than that.
+- Spending caps per user per day: successful uploads, mesh cleanings started (failed ones count too), stored bytes, and projects.
+
+**Known risk.** Row level security finds the current user through the `app.user_id` setting, which `UserDb` sets from the verified session. Any session can change that setting, so an attacker who could run arbitrary SQL as `meshgit_app` could read another user's rows, and create rows as them. Grants still block updates, deletes, tokens and login codes. Closing this needs the user id to come from something the session can't forge, such as a signed value checked by a `SECURITY DEFINER` function. `runtime-login.test.ts` documents the current behavior.
+
+When project sharing lands, the `meshgit_app` policies need a collaborator path, with tests that a collaborator gets exactly the access granted and nothing more.
+
 ## Testing
 
 - **Backend:** Vitest + supertest against a real Postgres database. Integration tests build the app with `createApp` and fake auth and geometry. Unit tests cover services, the geometry client, and storage. The coverage threshold is 80%.
