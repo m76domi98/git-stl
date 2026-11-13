@@ -16,6 +16,22 @@ services:
       timeout: 5s
       retries: 10
 
+  # Runs migrations with the schema owner's login, then exits. Only this
+  # one-shot container ever sees POSTGRES_PASSWORD; the backend doesn't.
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    command: ["node", "dist/migrate-cli.js"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
     build:
       context: .
@@ -24,9 +40,9 @@ services:
     ports:
       - "${BIND_ADDR:-127.0.0.1}:${BACKEND_PORT:-3001}:3001"
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-meshgit}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      # Least-privilege runtime logins only, never the migration login.
+      APP_DATABASE_URL: postgres://meshgit_app:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
+      AUTH_DATABASE_URL: postgres://meshgit_auth:${AUTH_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-meshgit}
       GEOMETRY_SERVICE_URL: http://geometry:8000
       # Local stack: development mode, ports bound to 127.0.0.1 unless BIND_ADDR says otherwise.
       NODE_ENV: ${NODE_ENV:-development}
@@ -41,8 +57,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:3001}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - uploads_data:/app/uploads
     develop:

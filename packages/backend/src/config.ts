@@ -3,16 +3,20 @@ import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
 
 const MB = 1024 * 1024
 const cap = (fallback: number) => z.coerce.number().int().min(1).default(fallback)
+const postgresUrl = z
+  .string()
+  .refine((u) => URL.canParse(u) && /^postgres(ql)?:$/.test(new URL(u).protocol), {
+    message: 'must be a postgres:// URL',
+  })
 
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(3001),
-    DATABASE_URL: z.string().min(1),
-    // Password for the restricted meshgit_app login that request queries use.
-    APP_DB_PASSWORD: z.string().min(16, 'must be at least 16 characters'),
-    // Password for the meshgit_auth login that the login flow and GitHub sync use.
-    AUTH_DB_PASSWORD: z.string().min(16, 'must be at least 16 characters'),
+    // The web app only gets the two least-privilege logins. The migration login
+    // (DATABASE_URL) belongs to the separate migrate command.
+    APP_DATABASE_URL: postgresUrl,
+    AUTH_DATABASE_URL: postgresUrl,
     FRONTEND_URL: z
       .string()
       .url()
@@ -35,9 +39,10 @@ const envSchema = z
 export interface Config {
   readonly nodeEnv: 'development' | 'test' | 'production'
   readonly port: number
-  readonly databaseUrl: string
-  readonly appDbPassword: string
-  readonly authDbPassword: string
+  /** meshgit_app: request queries, scoped to the signed-in user. */
+  readonly appDatabaseUrl: string
+  /** meshgit_auth: sign-in and GitHub sync. */
+  readonly authDatabaseUrl: string
   readonly frontendUrl: string
   readonly geometryServiceUrl: string
   readonly uploadsDir: string
@@ -55,9 +60,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   return Object.freeze({
     nodeEnv: e.NODE_ENV,
     port: e.PORT,
-    databaseUrl: e.DATABASE_URL,
-    appDbPassword: e.APP_DB_PASSWORD,
-    authDbPassword: e.AUTH_DB_PASSWORD,
+    appDatabaseUrl: e.APP_DATABASE_URL,
+    authDatabaseUrl: e.AUTH_DATABASE_URL,
     frontendUrl: e.FRONTEND_URL,
     geometryServiceUrl: e.GEOMETRY_SERVICE_URL,
     uploadsDir: e.UPLOADS_DIR,
