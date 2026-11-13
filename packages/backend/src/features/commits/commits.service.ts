@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { conflict, notFound } from '../../shared/http/errors.js'
+import { AppError, conflict, notFound } from '../../shared/http/errors.js'
 import type { GeometryClient } from '../../shared/geometry/geometry-client.js'
+import type { Quotas } from '../../shared/quotas.js'
 import type { MeshStorage } from '../../shared/storage.js'
 import type { ProjectsRepository } from '../projects/projects.repository.js'
 import type { CommitEvents } from './commit-events.js'
-import { ConcurrentCommitError, type CommitsRepository } from './commits.repository.js'
+import { ConcurrentCommitError, type CommitsRepository, type Usage } from './commits.repository.js'
 import type { CommitSummary, CreatedCommit, UploadedFile } from './commits.types.js'
 
 export interface CommitsService {
@@ -22,10 +23,11 @@ export interface CommitsServiceDeps {
   geometry: GeometryClient
   storage: MeshStorage
   events: CommitEvents
+  quotas: Pick<Quotas, 'maxStorageBytes' | 'maxUploadsPerDay'>
 }
 
 export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
-  const { commits, projects, geometry, storage, events } = deps
+  const { commits, projects, geometry, storage, events, quotas } = deps
 
   const ownedProject = async (userId: string, projectId: string) => {
     const project = await projects.findOwned(projectId, userId)
@@ -33,10 +35,20 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
     return project
   }
 
+  /** Throws when one more upload of `incomingBytes` would break a cap. */
+  const checkQuota = (usage: Usage, incomingBytes: number) => {
+    if (usage.uploadsToday >= quotas.maxUploadsPerDay) {
+      throw new AppError(429, 'Daily upload limit reached')
+    }
+    if (usage.storedBytes + incomingBytes > quotas.maxStorageBytes) {
+      throw new AppError(403, 'Storage limit reached')
+    }
+  }
+
   return {
     async list(userId, projectId) {
       const project = await ownedProject(userId, projectId)
-      return commits.listForProject(project.id)
+      return commits.listForProject(userId, project.id)
     },
 
     async readMesh(userId, commitId) {
@@ -52,6 +64,9 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
 
     async create(userId, { projectId, message, file }) {
       const project = await ownedProject(userId, projectId)
+      // Checked before cleaning so a capped user can't spend geometry CPU, then again
+      // inside the insert transaction so parallel uploads can't all slip past.
+      checkQuota(await commits.usageFor(userId), file.buffer.length)
       const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),
@@ -65,7 +80,10 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
       await storage.store(project.id, mesh.id, cleaned.data)
       let commit
       try {
-        commit = await commits.create({ projectId: project.id, authorId: userId, message, mesh })
+        commit = await commits.create(
+          { projectId: project.id, authorId: userId, message, mesh },
+          checkQuota,
+        )
       } catch (err) {
         await storage.remove(project.id, mesh.id)
         if (err instanceof ConcurrentCommitError)

@@ -1,6 +1,7 @@
 import type { Pool } from 'pg'
+import { applyRowSecurity } from './row-security.js'
 
-export async function migrate(pool: Pool): Promise<void> {
+export async function migrate(pool: Pool, options: { appPassword: string }): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,4 +89,6 @@ export async function migrate(pool: Pool): Promise<void> {
     CREATE INDEX IF NOT EXISTS commits_project_created_idx
       ON commits (project_id, created_at DESC);
   `)
+
+  await applyRowSecurity(pool, options.appPassword)
 }

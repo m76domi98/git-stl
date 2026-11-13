@@ -27,6 +27,8 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://meshgit:meshgit@localhost:5432/meshgit
+      # Throwaway password for the CI-only database, like the one above.
+      APP_DB_PASSWORD: ci-app-password-not-a-secret
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

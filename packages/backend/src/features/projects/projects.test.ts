@@ -1,6 +1,7 @@
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import pool from '../../db/pool.js'
+import { DEFAULT_QUOTAS } from '../../shared/quotas.js'
 import { TEST_USER_HEADER } from '../../test/fake-auth.js'
 import { createUser, deleteUsers } from '../../test/fixtures.js'
 import { testApp } from '../../test/test-app.js'
@@ -74,5 +75,41 @@ describe('projects', () => {
   it('rejects a malformed project id with 400', async () => {
     const res = await request(app).get('/api/projects/not-a-uuid').set(as(alice))
     expect(res.status).toBe(400)
+  })
+})
+
+describe('project spending cap', () => {
+  it('refuses to create projects past the per-user limit', async () => {
+    const capped = testApp({ quotas: { ...DEFAULT_QUOTAS, maxProjects: 1 } })
+    const carol = await createUser(pool)
+    try {
+      const first = await request(capped).post('/api/projects').set(as(carol)).send({ name: 'a' })
+      const second = await request(capped).post('/api/projects').set(as(carol)).send({ name: 'b' })
+
+      expect(first.status).toBe(201)
+      expect(second.status).toBe(403)
+      expect(second.body.error).toBe('Project limit reached')
+    } finally {
+      await deleteUsers(pool, [carol])
+    }
+  })
+
+  it('holds the limit when requests arrive at the same time', async () => {
+    const capped = testApp({ quotas: { ...DEFAULT_QUOTAS, maxProjects: 2 } })
+    const dave = await createUser(pool)
+    try {
+      const results = await Promise.all(
+        Array.from({ length: 6 }, (_, i) =>
+          request(capped)
+            .post('/api/projects')
+            .set(as(dave))
+            .send({ name: `p${i}` }),
+        ),
+      )
+      expect(results.filter((r) => r.status === 201)).toHaveLength(2)
+      expect(results.filter((r) => r.status === 403)).toHaveLength(4)
+    } finally {
+      await deleteUsers(pool, [dave])
+    }
   })
 })

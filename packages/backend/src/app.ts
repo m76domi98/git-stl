@@ -10,6 +10,7 @@ import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
 import { diffRouter } from './features/diff/diff.routes.js'
 import { mergeRouter } from './features/merge/merge.routes.js'
+import { createUserDb } from './db/user-db.js'
 import { createProjectsRepository } from './features/projects/projects.repository.js'
 import { projectsRouter } from './features/projects/projects.routes.js'
 import { createProjectsService } from './features/projects/projects.service.js'
@@ -17,6 +18,7 @@ import type { AuthModule } from './shared/auth/types.js'
 import { fail, ok } from './shared/http/envelope.js'
 import { errorHandler } from './shared/http/error-handler.js'
 import type { GeometryClient } from './shared/geometry/geometry-client.js'
+import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
 import type { MeshStorage } from './shared/storage.js'
 
 const JSON_BODY_LIMIT = '100kb'
@@ -29,6 +31,8 @@ export interface AppDeps {
   geometry: GeometryClient
   storage: MeshStorage
   events: CommitEvents
+  /** Per-user spending caps; defaults apply when omitted. */
+  quotas?: Quotas
 }
 
 /** Builds the Express app without listening, so tests can drive it directly. */
@@ -46,16 +50,23 @@ export function createApp(deps: AppDeps): Express {
 
   auth.install?.(app)
 
-  const projectsRepo = createProjectsRepository(db)
+  const userDb = createUserDb(db)
+  const quotas = deps.quotas ?? DEFAULT_QUOTAS
+  const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({
-    commits: createCommitsRepository(db),
+    commits: createCommitsRepository(userDb),
     projects: projectsRepo,
     geometry: deps.geometry,
     storage: deps.storage,
     events: deps.events,
+    quotas,
   })
 
-  app.use('/api/projects', auth.authenticate, projectsRouter(createProjectsService(projectsRepo)))
+  app.use(
+    '/api/projects',
+    auth.authenticate,
+    projectsRouter(createProjectsService(projectsRepo, quotas)),
+  )
   app.use('/api/commits', auth.authenticate, commitsRouter(commits))
   app.use('/api/diff', auth.authenticate, diffRouter())
   app.use('/api/merge', auth.authenticate, mergeRouter())
