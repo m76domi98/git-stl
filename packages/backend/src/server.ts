@@ -15,6 +15,10 @@ async function main(): Promise<void> {
   // Migrations run separately (pnpm migrate). The app holds only these two logins,
   // and refuses to start if either one is missing or more powerful than it should be.
   const appPool = new pg.Pool({ connectionString: config.appDatabaseUrl })
+  // An idle connection dropped by a Postgres restart shouldn't crash the process.
+  for (const pool of [appPool, authPool]) {
+    pool.on('error', (err) => console.error(`Database connection error: ${err.message}`))
+  }
   await assertRuntimeLogin(appPool, APP_ROLE)
   await assertRuntimeLogin(authPool, AUTH_ROLE)
 
