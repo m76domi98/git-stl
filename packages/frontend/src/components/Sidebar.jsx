@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import './Sidebar.css'
 
 const NAV_ITEMS = [
   { key: 'projects', label: 'Projects', icon: '▦', active: true },
