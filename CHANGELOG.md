@@ -2,6 +2,14 @@
 
 Notable changes to MeshGit, newest first. Dates are when the change was merged into `main`.
 
+## 2026-11-12
+
+### Design
+- New landing hero: a serif headline, a before/after slider on the model, and labels for added, removed, and unchanged geometry.
+- New "See the difference" section with a side-by-side diff viewer comparing a base commit and a feature branch.
+- Newsreader as a display serif for the two big landing headlines. App screens stay Inter only.
+- Faint watercolor washes behind the landing hero and in the dashboard gutters. They're kept out of the viewport and away from diff colors.
+
 ## 2026-10-24
 
 ### Design
