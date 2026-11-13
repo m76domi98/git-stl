@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import pool from './pool.js'
+import pool from '../test/admin-pool.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 import { authPool } from '../test/runtime-pools.js'
 

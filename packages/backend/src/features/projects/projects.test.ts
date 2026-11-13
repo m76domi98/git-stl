@@ -1,6 +1,6 @@
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import pool from '../../db/pool.js'
+import pool from '../../test/admin-pool.js'
 import { DEFAULT_QUOTAS } from '../../shared/quotas.js'
 import { TEST_USER_HEADER } from '../../test/fake-auth.js'
 import { createUser, deleteUsers } from '../../test/fixtures.js'

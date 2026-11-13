@@ -1,7 +1,7 @@
 import express from 'express'
 import request from 'supertest'
 import { afterAll, describe, expect, it } from 'vitest'
-import pool from '../../db/pool.js'
+import { authPool as pool } from '../../test/runtime-pools.js'
 import { DEV_USER, createDevAuth } from './dev-auth.js'
 import { currentUserId } from './types.js'
 

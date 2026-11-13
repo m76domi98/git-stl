@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import pool from './pool.js'
+import pool from '../test/admin-pool.js'
 import { createUserDb } from './user-db.js'
 import { appPool } from '../test/runtime-pools.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
