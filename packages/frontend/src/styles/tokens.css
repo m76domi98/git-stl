@@ -1,0 +1,25 @@
+:root {
+  /* Site chrome: neutral earth tones */
+  --bg: #F4F6F0;
+  --surface: #FDFCF8;
+  --surface-2: #EBE7DA;
+  --border: #DDD6C4;
+  --accent: #3B4A3F;
+  --accent-soft: #3B4A3F1a;
+  --clay: #D4A373;
+  --clay-soft: #D4A37333;
+  --clay-text: #8a5a2c;
+  --text: #24261F;
+  --muted: #5B5F53;
+  --green: #22c55e;
+  --red: #ef4444;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+
+  /* Viewport/model zone stays fixed dark regardless of site theme */
+  --viewport-bg: #0a0c14;
+  --viewport-border: #242838;
+  --viewport-muted: #7d8194;
+  --viewport-accent: #8fb08a;
+}

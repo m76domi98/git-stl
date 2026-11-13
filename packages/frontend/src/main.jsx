@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import './styles/tokens.css'
 import './index.css'
 import './styles/login.css'
 import { AuthProvider } from './context/AuthContext.jsx'
