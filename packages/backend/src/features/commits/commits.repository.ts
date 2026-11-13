@@ -1,4 +1,4 @@
-import type { UserDb } from '../../db/user-db.js'
+import { lockUser, type Queryable, type UserDb } from '../../db/user-db.js'
 import type { Commit, CommitSummary } from './commits.types.js'
 
 export interface NewCommit {
@@ -23,8 +23,14 @@ export interface CommitsRepository {
   findMeshOwned(commitId: string, ownerId: string): Promise<MeshLocation | null>
   /** What a user has stored and uploaded, for the spending caps. */
   usageFor(userId: string): Promise<Usage>
-  /** Inserts mesh + commit in one transaction, chained onto the latest commit. */
-  create(input: NewCommit): Promise<Commit>
+  /**
+   * Inserts mesh + commit in one transaction, chained onto the latest commit.
+   * `checkQuota` runs inside the transaction under a per-user lock and throws to refuse.
+   */
+  create(
+    input: NewCommit,
+    checkQuota: (usage: Usage, incomingBytes: number) => void,
+  ): Promise<Commit>
 }
 
 /** Another commit claimed the same parent first (unique index violation). */
@@ -36,6 +42,21 @@ export class ConcurrentCommitError extends Error {
 }
 
 const UNIQUE_VIOLATION = '23505'
+
+async function readUsage(db: Queryable, userId: string): Promise<Usage> {
+  const { rows } = await db.query<{ stored_bytes: string; uploads_today: number }>(
+    `SELECT COALESCE(SUM(m.file_size), 0)::bigint AS stored_bytes,
+            COUNT(*) FILTER (WHERE c.created_at > NOW() - INTERVAL '1 day')::int AS uploads_today
+     FROM commits c
+     JOIN meshes m ON m.id = c.mesh_id
+     WHERE c.author_id = $1`,
+    [userId],
+  )
+  return {
+    storedBytes: Number(rows[0]?.stored_bytes ?? 0),
+    uploadsToday: rows[0]?.uploads_today ?? 0,
+  }
+}
 
 /** Every query runs as the signed-in user, so row level security applies. */
 export function createCommitsRepository(db: UserDb): CommitsRepository {
@@ -66,22 +87,13 @@ export function createCommitsRepository(db: UserDb): CommitsRepository {
       return rows[0] ?? null
     },
 
-    async usageFor(userId) {
-      const [row] = await db.query<{ stored_bytes: string; uploads_today: number }>(
-        userId,
-        `SELECT COALESCE(SUM(m.file_size), 0)::bigint AS stored_bytes,
-                COUNT(*) FILTER (WHERE c.created_at > NOW() - INTERVAL '1 day')::int AS uploads_today
-         FROM commits c
-         JOIN meshes m ON m.id = c.mesh_id
-         WHERE c.author_id = $1`,
-        [userId],
-      )
-      return { storedBytes: Number(row?.stored_bytes ?? 0), uploadsToday: row?.uploads_today ?? 0 }
-    },
+    usageFor: (userId) => db.transaction(userId, (tx) => readUsage(tx, userId)),
 
-    async create({ projectId, authorId, message, mesh }) {
+    async create({ projectId, authorId, message, mesh }, checkQuota) {
       try {
         return await db.transaction(authorId, async (tx) => {
+          await lockUser(tx, authorId)
+          checkQuota(await readUsage(tx, authorId), mesh.fileSize)
           await tx.query(
             'INSERT INTO meshes (id, file_size, vertex_count, face_count) VALUES ($1, $2, $3, $4)',
             [mesh.id, mesh.fileSize, mesh.vertexCount, mesh.faceCount],

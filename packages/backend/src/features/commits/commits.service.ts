@@ -5,7 +5,7 @@ import type { Quotas } from '../../shared/quotas.js'
 import type { MeshStorage } from '../../shared/storage.js'
 import type { ProjectsRepository } from '../projects/projects.repository.js'
 import type { CommitEvents } from './commit-events.js'
-import { ConcurrentCommitError, type CommitsRepository } from './commits.repository.js'
+import { ConcurrentCommitError, type CommitsRepository, type Usage } from './commits.repository.js'
 import type { CommitSummary, CreatedCommit, UploadedFile } from './commits.types.js'
 
 export interface CommitsService {
@@ -35,9 +35,8 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
     return project
   }
 
-  /** Checked before cleaning, so a capped user can't spend geometry CPU or disk. */
-  const enforceQuotas = async (userId: string, incomingBytes: number) => {
-    const usage = await commits.usageFor(userId)
+  /** Throws when one more upload of `incomingBytes` would break a cap. */
+  const checkQuota = (usage: Usage, incomingBytes: number) => {
     if (usage.uploadsToday >= quotas.maxUploadsPerDay) {
       throw new AppError(429, 'Daily upload limit reached')
     }
@@ -65,7 +64,9 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
 
     async create(userId, { projectId, message, file }) {
       const project = await ownedProject(userId, projectId)
-      await enforceQuotas(userId, file.buffer.length)
+      // Checked before cleaning so a capped user can't spend geometry CPU, then again
+      // inside the insert transaction so parallel uploads can't all slip past.
+      checkQuota(await commits.usageFor(userId), file.buffer.length)
       const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),
@@ -79,7 +80,10 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
       await storage.store(project.id, mesh.id, cleaned.data)
       let commit
       try {
-        commit = await commits.create({ projectId: project.id, authorId: userId, message, mesh })
+        commit = await commits.create(
+          { projectId: project.id, authorId: userId, message, mesh },
+          checkQuota,
+        )
       } catch (err) {
         await storage.remove(project.id, mesh.id)
         if (err instanceof ConcurrentCommitError)

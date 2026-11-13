@@ -59,6 +59,15 @@ describe('upload spending caps', () => {
     expect(geometry.clean).toHaveBeenCalledTimes(2)
   })
 
+  it('holds the daily limit when uploads arrive at the same time', async () => {
+    const { upload } = await setup({ maxUploadsPerDay: 2 })
+
+    const results = await Promise.all(Array.from({ length: 5 }, () => upload()))
+
+    expect(results.filter((r) => r.status === 201)).toHaveLength(2)
+    expect(results.filter((r) => r.status === 429)).toHaveLength(3)
+  })
+
   it('refuses an upload that would go past the storage limit', async () => {
     const { upload, geometry } = await setup({ maxStorageBytes: STL.length * 2 - 1 })
 
