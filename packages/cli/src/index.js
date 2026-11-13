@@ -4,7 +4,7 @@ import { login } from './commands/login.js'
 import { loadCredentials } from './config.js'
 
 program
-  .name('meshgit')
+  .name('tessera')
   .description('Version control for 3D mesh files')
   .version('0.0.1')
 
@@ -19,7 +19,7 @@ program
   .action(() => {
     const creds = loadCredentials()
     if (!creds) {
-      console.log('Not logged in. Run: meshgit login')
+      console.log('Not logged in. Run: tessera login')
     } else {
       console.log(`Logged in as @${creds.username}`)
     }

@@ -1,9 +1,9 @@
 {
-  "name": "meshgit-cli",
+  "name": "tessera-cli",
   "version": "0.0.1",
   "type": "module",
   "bin": {
-    "meshgit": "./src/index.js"
+    "tessera": "./src/index.js"
   },
   "scripts": {
     "start": "node src/index.js"
