@@ -1,3 +1,4 @@
+import './MeshLoader.css'
 export default function MeshLoader() {
   return (
     <div className="mesh-loader">

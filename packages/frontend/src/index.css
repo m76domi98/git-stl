@@ -383,40 +383,6 @@ button, input {
   color: var(--viewport-muted);
 }
 
-/* ── Mesh loading spinner ──────────────────────────── */
-.mesh-loader {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--viewport-bg);
-  color: var(--viewport-accent);
-}
-
-.mesh-loader-spin {
-  transform-origin: 50px 58px;
-  animation: mesh-spin 1.6s linear infinite;
-}
-
-.mesh-loader-spin circle {
-  animation: mesh-pulse 1.4s ease-in-out infinite;
-}
-
-.mesh-loader-spin circle:nth-of-type(2) { animation-delay: 0.18s; }
-.mesh-loader-spin circle:nth-of-type(3) { animation-delay: 0.36s; }
-
-.mesh-loader-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  color: var(--viewport-muted);
-}
-
-@keyframes mesh-spin { to { transform: rotate(360deg); } }
-@keyframes mesh-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
-
 .logo-mark {
   width: 20px;
   height: 20px;
