@@ -18,6 +18,8 @@ const envSchema = z
     // (DATABASE_URL) belongs to the separate migrate command.
     APP_DATABASE_URL: postgresUrl,
     AUTH_DATABASE_URL: postgresUrl,
+    // Signs the user id row level security trusts. Same value the migrate step stores.
+    DB_CONTEXT_KEY: z.string().min(32, 'must be at least 32 characters'),
     FRONTEND_URL: z
       .string()
       .url()
@@ -52,6 +54,8 @@ export interface Config {
   readonly appDatabaseUrl: string
   /** meshgit_auth: sign-in and GitHub sync. */
   readonly authDatabaseUrl: string
+  /** Signs the per-transaction user id (see db/user-context.ts). */
+  readonly dbContextKey: string
   readonly frontendUrl: string
   readonly geometryServiceUrl: string
   readonly uploadsDir: string
@@ -71,6 +75,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     port: e.PORT,
     appDatabaseUrl: e.APP_DATABASE_URL,
     authDatabaseUrl: e.AUTH_DATABASE_URL,
+    dbContextKey: e.DB_CONTEXT_KEY,
     frontendUrl: e.FRONTEND_URL,
     geometryServiceUrl: e.GEOMETRY_SERVICE_URL,
     uploadsDir: e.UPLOADS_DIR,

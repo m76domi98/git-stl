@@ -4,7 +4,7 @@ import { createApp, type AppDeps } from '../app.js'
 import { createCommitEvents } from '../features/commits/commit-events.js'
 import type { GeometryClient } from '../shared/geometry/geometry-client.js'
 import type { MeshStorage } from '../shared/storage.js'
-import { appPool } from './runtime-pools.js'
+import { CONTEXT_KEY, appPool } from './runtime-pools.js'
 import { fakeAuth } from './fake-auth.js'
 
 const unusedStorage: MeshStorage = {
@@ -20,7 +20,7 @@ export const fakeGeometry = (): GeometryClient => ({
 /** An app wired to the test database with fake auth and stubbed collaborators. */
 export function testApp(overrides: Partial<AppDeps> = {}): Express {
   return createApp({
-    config: { frontendUrl: 'http://localhost:5173' },
+    config: { frontendUrl: 'http://localhost:5173', dbContextKey: CONTEXT_KEY },
     auth: fakeAuth,
     db: appPool,
     geometry: fakeGeometry(),

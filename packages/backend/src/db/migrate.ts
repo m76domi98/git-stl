@@ -1,9 +1,19 @@
 import type { Pool } from 'pg'
 import { ensureRuntimeRoles, type RuntimePasswords } from './roles.js'
 import { applyRowSecurity } from './row-security.js'
+import { applyUserContext } from './user-context.js'
 
 /** Creates or updates the schema. Runs as the migration login, never the web app's. */
-export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<void> {
+export interface MigrateOptions {
+  readonly passwords: RuntimePasswords
+  /** Key for signing the per-transaction user id (see user-context.ts). */
+  readonly contextKey: string
+}
+
+export async function migrate(
+  pool: Pool,
+  { passwords, contextKey }: MigrateOptions,
+): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,5 +116,6 @@ export async function migrate(pool: Pool, passwords: RuntimePasswords): Promise<
   `)
 
   await ensureRuntimeRoles(pool, passwords)
+  await applyUserContext(pool, contextKey)
   await applyRowSecurity(pool)
 }

@@ -2,10 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createUserDb } from '../../db/user-db.js'
 import adminPool from '../../test/admin-pool.js'
 import { createUser, deleteUsers } from '../../test/fixtures.js'
-import { appPool } from '../../test/runtime-pools.js'
+import { CONTEXT_KEY, appPool } from '../../test/runtime-pools.js'
 import { createProcessingBudget } from './processing-budget.js'
 
-const userDb = createUserDb(appPool)
+const userDb = createUserDb(appPool, { contextKey: CONTEXT_KEY })
 const budget = createProcessingBudget(userDb)
 
 let user: string

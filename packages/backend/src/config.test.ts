@@ -5,6 +5,7 @@ import { DEFAULT_QUOTAS } from './shared/quotas.js'
 const base = {
   APP_DATABASE_URL: 'postgres://meshgit_app:p@localhost:5432/db',
   AUTH_DATABASE_URL: 'postgres://meshgit_auth:p@localhost:5432/db',
+  DB_CONTEXT_KEY: 'context-key-0123456789-0123456789',
 }
 
 describe('loadConfig', () => {
@@ -16,6 +17,7 @@ describe('loadConfig', () => {
       port: 3001,
       appDatabaseUrl: base.APP_DATABASE_URL,
       authDatabaseUrl: base.AUTH_DATABASE_URL,
+      dbContextKey: base.DB_CONTEXT_KEY,
       frontendUrl: 'http://localhost:5173',
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',

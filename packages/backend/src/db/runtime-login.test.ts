@@ -1,15 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { signUserContext } from './user-context.js'
 import { createUserDb } from './user-db.js'
 import adminPool from '../test/admin-pool.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
-import { appPool } from '../test/runtime-pools.js'
+import { CONTEXT_KEY, appPool } from '../test/runtime-pools.js'
 
 // Every query here goes over the real meshgit_app login, as request queries do.
 // None of them filter by owner, so only grants and row level security stand
 // between user A and user B's data.
 
 const PERMISSION_DENIED = '42501'
-const userDb = createUserDb(appPool)
+const userDb = createUserDb(appPool, { contextKey: CONTEXT_KEY })
 
 let alice: string
 let bob: string
@@ -104,22 +105,49 @@ describe('the runtime login cannot gain more privilege', () => {
   })
 })
 
-describe('known risk: the current user comes from a setting the login can change', () => {
-  // app_user_id() reads the app.user_id setting, and any session can call
-  // set_config. UserDb sets it from the verified session, but someone who could
-  // run arbitrary SQL as meshgit_app could set it to another user's id and read
-  // their rows. Grants still cap what they could do: no updates, deletes,
-  // tokens, or login codes. This test documents the gap; change it when it closes.
-  it('lets a session that sets app.user_id itself read as that user', async () => {
+describe('a session cannot pose as another user by setting app.user_id', () => {
+  // Arbitrary SQL as meshgit_app can set any setting, but app_user_id() only
+  // trusts a user id signed with DB_CONTEXT_KEY for the current transaction.
+
+  /** Runs one select as a session that sets the context itself. */
+  async function poseAs(userId: string, sig: (xid: string) => string): Promise<unknown[]> {
     const client = await appPool.connect()
     try {
       await client.query('BEGIN')
-      await client.query("SELECT set_config('app.user_id', $1, true)", [bob])
-      const { rows } = await client.query('SELECT owner_id FROM projects')
-      expect(rows).toEqual([{ owner_id: bob }])
+      const { rows } = await client.query<{ xid: string }>(
+        'SELECT pg_current_xact_id()::text AS xid',
+      )
+      await client.query(
+        "SELECT set_config('app.user_id', $1, true), set_config('app.user_sig', $2, true)",
+        [userId, sig(rows[0]!.xid)],
+      )
+      return (await client.query('SELECT owner_id FROM projects')).rows
     } finally {
       await client.query('ROLLBACK')
       client.release()
     }
+  }
+
+  it('sees nothing with no signature, or one forged without the key', async () => {
+    await expect(poseAs(bob, () => '')).resolves.toEqual([])
+    await expect(poseAs(bob, (xid) => signUserContext('guessed-key', bob, xid))).resolves.toEqual(
+      [],
+    )
+  })
+
+  it("can't replay a signature from another transaction", async () => {
+    await expect(poseAs(bob, () => signUserContext(CONTEXT_KEY, bob, '1'))).resolves.toEqual([])
+  })
+
+  it("can't read the signing key", async () => {
+    await expect(appPool.query('SELECT key FROM app_context_key')).rejects.toMatchObject({
+      code: PERMISSION_DENIED,
+    })
+  })
+
+  it('reads as the user when the signature is genuine', async () => {
+    await expect(poseAs(bob, (xid) => signUserContext(CONTEXT_KEY, bob, xid))).resolves.toEqual([
+      { owner_id: bob },
+    ])
   })
 })

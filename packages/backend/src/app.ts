@@ -27,7 +27,7 @@ const JSON_BODY_LIMIT = '100kb'
 const RATE_LIMIT = { windowMs: 60_000, limit: 300 }
 
 export interface AppDeps {
-  config: Pick<Config, 'frontendUrl'>
+  config: Pick<Config, 'frontendUrl' | 'dbContextKey'>
   auth: AuthModule
   db: Pool
   geometry: GeometryClient
@@ -52,7 +52,7 @@ export function createApp(deps: AppDeps): Express {
 
   auth.install?.(app)
 
-  const userDb = createUserDb(db)
+  const userDb = createUserDb(db, { contextKey: deps.config.dbContextKey })
   const quotas = deps.quotas ?? DEFAULT_QUOTAS
   const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({

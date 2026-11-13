@@ -5,6 +5,7 @@ const base = {
   DATABASE_URL: 'postgres://owner:p@localhost:5432/db',
   APP_DB_PASSWORD: 'app-password-0123456',
   AUTH_DB_PASSWORD: 'auth-password-012345',
+  DB_CONTEXT_KEY: 'context-key-0123456789-0123456789',
 }
 
 describe('loadMigrateConfig', () => {
@@ -12,12 +13,16 @@ describe('loadMigrateConfig', () => {
     expect(loadMigrateConfig(base)).toEqual({
       databaseUrl: base.DATABASE_URL,
       passwords: { app: base.APP_DB_PASSWORD, auth: base.AUTH_DB_PASSWORD },
+      contextKey: base.DB_CONTEXT_KEY,
     })
   })
 
-  it.each(['DATABASE_URL', 'APP_DB_PASSWORD', 'AUTH_DB_PASSWORD'])('requires %s', (name) => {
-    expect(() => loadMigrateConfig({ ...base, [name]: undefined })).toThrow(name)
-  })
+  it.each(['DATABASE_URL', 'APP_DB_PASSWORD', 'AUTH_DB_PASSWORD', 'DB_CONTEXT_KEY'])(
+    'requires %s',
+    (name) => {
+      expect(() => loadMigrateConfig({ ...base, [name]: undefined })).toThrow(name)
+    },
+  )
 
   it('rejects short passwords and ones that would need escaping in a URL', () => {
     expect(() => loadMigrateConfig({ ...base, APP_DB_PASSWORD: 'short' })).toThrow(/16/)
