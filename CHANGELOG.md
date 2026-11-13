@@ -5,6 +5,7 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 ## 2026-11-13
 
 ### Backend
+- Upgraded express, multer and zod to patched versions, which fixes 7 known vulnerabilities in the backend's dependencies, including IP spoofing through `proxy-addr` and denial of service in `body-parser`, `qs` and zod.
 - Row level security in Postgres. Request queries run as a restricted `meshgit_app` role scoped to the signed-in user, so a user can only see and create their own projects, commits, and meshes, and can never read tokens or login codes.
 - Per-user spending caps on uploads per day, stored mesh data, and number of projects, set with the `QUOTA_*` environment variables. They're checked before mesh cleaning and hold up under parallel requests.
 

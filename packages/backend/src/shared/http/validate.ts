@@ -1,7 +1,7 @@
-import type { ZodType, ZodTypeDef } from 'zod'
+import type { ZodType } from 'zod'
 import { badRequest } from './errors.js'
 
-export function parse<T>(schema: ZodType<T, ZodTypeDef, unknown>, value: unknown): T {
+export function parse<T>(schema: ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value)
   if (result.success) return result.data
   const issues = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }))
