@@ -58,3 +58,11 @@ jobs:
       - run: pip install ruff
       - run: ruff check .
       - run: ruff format --check .
+      - name: Build image
+        run: docker build -t meshgit-geometry .
+      - name: Smoke test image
+        run: |
+          docker run -d --name geometry -p 8000:8000 meshgit-geometry
+          for i in $(seq 1 30); do curl -fsS localhost:8000/health && exit 0; sleep 1; done
+          docker logs geometry
+          exit 1
