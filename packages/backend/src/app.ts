@@ -18,6 +18,7 @@ import type { AuthModule } from './shared/auth/types.js'
 import { fail, ok } from './shared/http/envelope.js'
 import { errorHandler } from './shared/http/error-handler.js'
 import type { GeometryClient } from './shared/geometry/geometry-client.js'
+import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
 import type { MeshStorage } from './shared/storage.js'
 
 const JSON_BODY_LIMIT = '100kb'
@@ -30,6 +31,8 @@ export interface AppDeps {
   geometry: GeometryClient
   storage: MeshStorage
   events: CommitEvents
+  /** Per-user spending caps; defaults apply when omitted. */
+  quotas?: Quotas
 }
 
 /** Builds the Express app without listening, so tests can drive it directly. */
@@ -55,6 +58,7 @@ export function createApp(deps: AppDeps): Express {
     geometry: deps.geometry,
     storage: deps.storage,
     events: deps.events,
+    quotas: deps.quotas ?? DEFAULT_QUOTAS,
   })
 
   app.use('/api/projects', auth.authenticate, projectsRouter(createProjectsService(projectsRepo)))

@@ -18,11 +18,15 @@ function service(commits: Partial<CommitsRepository>) {
   }
   const storage: MeshStorage = { store: vi.fn(), read: vi.fn(), remove: vi.fn() }
   const svc = createCommitsService({
-    commits: commits as CommitsRepository,
+    commits: {
+      usageFor: vi.fn(async () => ({ storedBytes: 0, uploadsToday: 0 })),
+      ...commits,
+    } as CommitsRepository,
     projects,
     geometry: fakeGeometry(),
     storage,
     events: createCommitEvents(),
+    quotas: { maxStorageBytes: 1000, maxUploadsPerDay: 10 },
   })
   return { svc, storage }
 }

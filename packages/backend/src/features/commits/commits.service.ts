@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { conflict, notFound } from '../../shared/http/errors.js'
+import { AppError, conflict, notFound } from '../../shared/http/errors.js'
 import type { GeometryClient } from '../../shared/geometry/geometry-client.js'
+import type { Quotas } from '../../shared/quotas.js'
 import type { MeshStorage } from '../../shared/storage.js'
 import type { ProjectsRepository } from '../projects/projects.repository.js'
 import type { CommitEvents } from './commit-events.js'
@@ -22,15 +23,27 @@ export interface CommitsServiceDeps {
   geometry: GeometryClient
   storage: MeshStorage
   events: CommitEvents
+  quotas: Pick<Quotas, 'maxStorageBytes' | 'maxUploadsPerDay'>
 }
 
 export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
-  const { commits, projects, geometry, storage, events } = deps
+  const { commits, projects, geometry, storage, events, quotas } = deps
 
   const ownedProject = async (userId: string, projectId: string) => {
     const project = await projects.findOwned(projectId, userId)
     if (!project) throw notFound('Project')
     return project
+  }
+
+  /** Checked before cleaning, so a capped user can't spend geometry CPU or disk. */
+  const enforceQuotas = async (userId: string, incomingBytes: number) => {
+    const usage = await commits.usageFor(userId)
+    if (usage.uploadsToday >= quotas.maxUploadsPerDay) {
+      throw new AppError(429, 'Daily upload limit reached')
+    }
+    if (usage.storedBytes + incomingBytes > quotas.maxStorageBytes) {
+      throw new AppError(403, 'Storage limit reached')
+    }
   }
 
   return {
@@ -52,6 +65,7 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
 
     async create(userId, { projectId, message, file }) {
       const project = await ownedProject(userId, projectId)
+      await enforceQuotas(userId, file.buffer.length)
       const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),

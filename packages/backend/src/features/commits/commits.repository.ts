@@ -13,9 +13,16 @@ export interface MeshLocation {
   mesh_id: string
 }
 
+export interface Usage {
+  storedBytes: number
+  uploadsToday: number
+}
+
 export interface CommitsRepository {
   listForProject(userId: string, projectId: string): Promise<CommitSummary[]>
   findMeshOwned(commitId: string, ownerId: string): Promise<MeshLocation | null>
+  /** What a user has stored and uploaded, for the spending caps. */
+  usageFor(userId: string): Promise<Usage>
   /** Inserts mesh + commit in one transaction, chained onto the latest commit. */
   create(input: NewCommit): Promise<Commit>
 }
@@ -57,6 +64,19 @@ export function createCommitsRepository(db: UserDb): CommitsRepository {
         [commitId, ownerId],
       )
       return rows[0] ?? null
+    },
+
+    async usageFor(userId) {
+      const [row] = await db.query<{ stored_bytes: string; uploads_today: number }>(
+        userId,
+        `SELECT COALESCE(SUM(m.file_size), 0)::bigint AS stored_bytes,
+                COUNT(*) FILTER (WHERE c.created_at > NOW() - INTERVAL '1 day')::int AS uploads_today
+         FROM commits c
+         JOIN meshes m ON m.id = c.mesh_id
+         WHERE c.author_id = $1`,
+        [userId],
+      )
+      return { storedBytes: Number(row?.stored_bytes ?? 0), uploadsToday: row?.uploads_today ?? 0 }
     },
 
     async create({ projectId, authorId, message, mesh }) {
