@@ -3,6 +3,9 @@ import type { Pool } from 'pg'
 interface LoginFacts {
   role: string
   superuser: boolean
+  replication: boolean
+  temp_tables: boolean
+  create_in_schema: boolean
   bypass_rls: boolean
   create_role: boolean
   create_db: boolean
@@ -17,7 +20,10 @@ interface LoginFacts {
  */
 export async function assertRuntimeLogin(pool: Pool, expectedRole: string): Promise<void> {
   const { rows } = await pool.query<LoginFacts>(
-    `SELECT r.rolname AS role, r.rolsuper AS superuser, r.rolbypassrls AS bypass_rls,
+    `SELECT r.rolname AS role, r.rolsuper AS superuser,
+            r.rolreplication AS replication, r.rolbypassrls AS bypass_rls,
+            has_database_privilege(current_database(), 'TEMP') AS temp_tables,
+            has_schema_privilege('public', 'CREATE') AS create_in_schema,
             r.rolcreaterole AS create_role, r.rolcreatedb AS create_db,
             EXISTS (SELECT 1 FROM pg_auth_members m WHERE m.member = r.oid) AS member_of_roles,
             EXISTS (SELECT 1 FROM pg_class c WHERE c.relowner = r.oid
@@ -33,9 +39,12 @@ export async function assertRuntimeLogin(pool: Pool, expectedRole: string): Prom
   const excess = (
     [
       ['superuser', facts.superuser],
+      ['REPLICATION', facts.replication],
       ['BYPASSRLS', facts.bypass_rls],
       ['CREATEROLE', facts.create_role],
       ['CREATEDB', facts.create_db],
+      ['temporary tables', facts.temp_tables],
+      ['CREATE on the schema', facts.create_in_schema],
       ['role memberships', facts.member_of_roles],
       ['table ownership', facts.owns_tables],
     ] as const
