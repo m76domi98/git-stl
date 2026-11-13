@@ -5,6 +5,7 @@ import { assertRuntimeLogin, assertSignedUserContext } from './login-check.js'
 import { APP_ROLE, AUTH_ROLE } from './roles.js'
 import { createUserDb } from './user-db.js'
 import adminPool from '../test/admin-pool.js'
+import { changeRolesSerially } from '../test/fixtures.js'
 import { CONTEXT_KEY, appPool, authPool, loginUrl } from '../test/runtime-pools.js'
 
 afterAll(() => Promise.all([adminPool.end(), appPool.end(), authPool.end()]))
@@ -28,16 +29,23 @@ describe('assertRuntimeLogin', () => {
   it('names every excess privilege on a login with the right role name', async () => {
     const role = 'meshgit_check_overpowered'
     const password = randomUUID()
-    await adminPool.query(`DROP ROLE IF EXISTS ${role}`)
+    const database = new URL(process.env.DATABASE_URL!).pathname.slice(1)
     const { rows } = await adminPool.query<{ sql: string }>(
       "SELECT format('CREATE ROLE %I LOGIN CREATEDB PASSWORD %L', $1::text, $2::text) AS sql",
       [role, password],
     )
-    await adminPool.query(rows[0]!.sql)
-    await adminPool.query(`GRANT ${APP_ROLE} TO ${role}`)
-    await adminPool.query(
-      `GRANT CONNECT ON DATABASE "${new URL(process.env.DATABASE_URL!).pathname.slice(1)}" TO ${role}`,
-    )
+    await changeRolesSerially(adminPool, [
+      // A run that died midway can leave the role behind, still holding grants.
+      `DO $do$ BEGIN
+         IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${role}') THEN
+           DROP OWNED BY ${role};
+           DROP ROLE ${role};
+         END IF;
+       END $do$`,
+      rows[0]!.sql,
+      `GRANT ${APP_ROLE} TO ${role}`,
+      `GRANT CONNECT ON DATABASE "${database}" TO ${role}`,
+    ])
     const pool = new pg.Pool({
       connectionString: loginUrl(process.env.DATABASE_URL!, role, password),
     })
@@ -47,8 +55,7 @@ describe('assertRuntimeLogin', () => {
       )
     } finally {
       await pool.end()
-      await adminPool.query(`DROP OWNED BY ${role}`)
-      await adminPool.query(`DROP ROLE ${role}`)
+      await changeRolesSerially(adminPool, [`DROP OWNED BY ${role}`, `DROP ROLE ${role}`])
     }
   })
 })
