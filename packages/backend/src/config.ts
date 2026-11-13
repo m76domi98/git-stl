@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
+import { DEFAULT_QUOTAS, QUOTA_CEILINGS, type Quotas } from './shared/quotas.js'
 
 const MB = 1024 * 1024
-const cap = (fallback: number) => z.coerce.number().int().min(1).default(fallback)
+const cap = (fallback: number, ceiling: number) =>
+  z.coerce.number().int().min(1).max(ceiling).default(fallback)
 const postgresUrl = z
   .string()
   .refine((u) => URL.canParse(u) && /^postgres(ql)?:$/.test(new URL(u).protocol), {
@@ -27,10 +28,13 @@ const envSchema = z
     // 'github' loads the local auth module; 'dev' uses the built-in stub (never in production).
     AUTH_MODE: z.enum(['github', 'dev']).default('github'),
     // Per-user spending caps.
-    QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB),
-    QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay),
-    QUOTA_PROCESSING_PER_DAY: cap(DEFAULT_QUOTAS.maxProcessingPerDay),
-    QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects),
+    QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB, QUOTA_CEILINGS.storageMb),
+    QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay, QUOTA_CEILINGS.uploadsPerDay),
+    QUOTA_PROCESSING_PER_DAY: cap(
+      DEFAULT_QUOTAS.maxProcessingPerDay,
+      QUOTA_CEILINGS.processingPerDay,
+    ),
+    QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects, QUOTA_CEILINGS.projects),
   })
   .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
     message: 'AUTH_MODE=dev is not allowed when NODE_ENV=production',

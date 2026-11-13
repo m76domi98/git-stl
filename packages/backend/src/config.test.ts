@@ -87,6 +87,15 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...base, QUOTA_PROJECTS: '0' })).toThrow(/QUOTA_PROJECTS/)
   })
 
+  it.each([
+    ['QUOTA_STORAGE_MB', '1048577'],
+    ['QUOTA_UPLOADS_PER_DAY', '10001'],
+    ['QUOTA_PROCESSING_PER_DAY', '20001'],
+    ['QUOTA_PROJECTS', '10001'],
+  ])('rejects %s above its ceiling, so a typo cannot switch the cap off', (name, value) => {
+    expect(() => loadConfig({ ...base, [name]: value })).toThrow(new RegExp(`${name}.*<=`))
+  })
+
   it('returns a frozen object', () => {
     expect(Object.isFrozen(loadConfig(base))).toBe(true)
   })
