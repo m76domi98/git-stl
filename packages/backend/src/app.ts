@@ -10,6 +10,7 @@ import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
 import { diffRouter } from './features/diff/diff.routes.js'
 import { mergeRouter } from './features/merge/merge.routes.js'
+import { createUserDb } from './db/user-db.js'
 import { createProjectsRepository } from './features/projects/projects.repository.js'
 import { projectsRouter } from './features/projects/projects.routes.js'
 import { createProjectsService } from './features/projects/projects.service.js'
@@ -46,7 +47,8 @@ export function createApp(deps: AppDeps): Express {
 
   auth.install?.(app)
 
-  const projectsRepo = createProjectsRepository(db)
+  const userDb = createUserDb(db)
+  const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({
     commits: createCommitsRepository(db),
     projects: projectsRepo,
