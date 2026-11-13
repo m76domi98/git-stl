@@ -9,6 +9,7 @@ import { createCommitsRepository } from './features/commits/commits.repository.j
 import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
 import { createProcessingBudget } from './features/commits/processing-budget.js'
+import { createInFlightLimit } from './shared/in-flight-limit.js'
 import { diffRouter } from './features/diff/diff.routes.js'
 import { mergeRouter } from './features/merge/merge.routes.js'
 import { createUserDb } from './db/user-db.js'
@@ -61,6 +62,7 @@ export function createApp(deps: AppDeps): Express {
     storage: deps.storage,
     events: deps.events,
     processing: createProcessingBudget(userDb),
+    cleaning: createInFlightLimit(quotas.maxConcurrentCleans),
     quotas,
   })
 

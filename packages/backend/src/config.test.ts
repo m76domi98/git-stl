@@ -73,12 +73,14 @@ describe('loadConfig', () => {
       QUOTA_STORAGE_MB: '10',
       QUOTA_UPLOADS_PER_DAY: '5',
       QUOTA_PROCESSING_PER_DAY: '7',
+      QUOTA_CONCURRENT_CLEANS: '4',
       QUOTA_PROJECTS: '3',
     })
     expect(config.quotas).toEqual({
       maxStorageBytes: 10 * 1024 * 1024,
       maxUploadsPerDay: 5,
       maxProcessingPerDay: 7,
+      maxConcurrentCleans: 4,
       maxProjects: 3,
     })
   })
@@ -92,6 +94,7 @@ describe('loadConfig', () => {
     ['QUOTA_UPLOADS_PER_DAY', '10001'],
     ['QUOTA_PROCESSING_PER_DAY', '20001'],
     ['QUOTA_PROJECTS', '10001'],
+    ['QUOTA_CONCURRENT_CLEANS', '17'],
   ])('rejects %s above its ceiling, so a typo cannot switch the cap off', (name, value) => {
     expect(() => loadConfig({ ...base, [name]: value })).toThrow(new RegExp(`${name}.*<=`))
   })

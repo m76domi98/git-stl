@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { AppError, conflict, notFound } from '../../shared/http/errors.js'
 import type { GeometryClient } from '../../shared/geometry/geometry-client.js'
+import type { InFlightLimit } from '../../shared/in-flight-limit.js'
 import type { Quotas } from '../../shared/quotas.js'
 import type { MeshStorage } from '../../shared/storage.js'
 import type { ProjectsRepository } from '../projects/projects.repository.js'
@@ -25,11 +26,13 @@ export interface CommitsServiceDeps {
   storage: MeshStorage
   events: CommitEvents
   processing: ProcessingBudget
+  /** Per-user cap on cleanings running at once, sized by quotas.maxConcurrentCleans. */
+  cleaning: InFlightLimit
   quotas: Pick<Quotas, 'maxStorageBytes' | 'maxUploadsPerDay' | 'maxProcessingPerDay'>
 }
 
 export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
-  const { commits, projects, geometry, storage, events, processing, quotas } = deps
+  const { commits, projects, geometry, storage, events, processing, cleaning, quotas } = deps
 
   const ownedProject = async (userId: string, projectId: string) => {
     const project = await projects.findOwned(projectId, userId)
@@ -69,10 +72,19 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
       // Checked before cleaning so a capped user can't spend geometry CPU, then again
       // inside the insert transaction so parallel uploads can't all slip past.
       checkQuota(await commits.usageFor(userId), file.buffer.length)
-      if (!(await processing.claim(userId, quotas.maxProcessingPerDay))) {
-        throw new AppError(429, 'Daily processing limit reached')
+      // Taken before the budget, so an upload refused here doesn't spend any.
+      const release = cleaning.tryAcquire(userId)
+      if (!release)
+        throw new AppError(429, 'Too many uploads processing at once, try again shortly')
+      let cleaned
+      try {
+        if (!(await processing.claim(userId, quotas.maxProcessingPerDay))) {
+          throw new AppError(429, 'Daily processing limit reached')
+        }
+        cleaned = await geometry.clean(file.buffer)
+      } finally {
+        release()
       }
-      const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),
         fileSize: cleaned.data.length,

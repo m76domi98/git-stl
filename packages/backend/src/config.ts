@@ -35,6 +35,10 @@ const envSchema = z
       QUOTA_CEILINGS.processingPerDay,
     ),
     QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects, QUOTA_CEILINGS.projects),
+    QUOTA_CONCURRENT_CLEANS: cap(
+      DEFAULT_QUOTAS.maxConcurrentCleans,
+      QUOTA_CEILINGS.concurrentCleans,
+    ),
   })
   .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
     message: 'AUTH_MODE=dev is not allowed when NODE_ENV=production',
@@ -75,6 +79,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       maxStorageBytes: e.QUOTA_STORAGE_MB * MB,
       maxUploadsPerDay: e.QUOTA_UPLOADS_PER_DAY,
       maxProcessingPerDay: e.QUOTA_PROCESSING_PER_DAY,
+      maxConcurrentCleans: e.QUOTA_CONCURRENT_CLEANS,
       maxProjects: e.QUOTA_PROJECTS,
     }),
   })
