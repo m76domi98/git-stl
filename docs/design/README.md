@@ -23,7 +23,7 @@ The file has three pages:
 | 6 | Conflict Resolution | Left and right close-ups, with keep left, keep right, or manual select |
 | 7 | Merge Result | Preview of the merged mesh, a summary, and the commit message |
 | 8 | Commit History | Commits grouped by day, filterable by branch and author |
-| 9 | Landing Page | What MeshGit does, how the commit / compare / merge loop works, and the way in |
+| 9 | Landing Page | A hero with a before/after slider on the model, a side-by-side diff viewer, how the commit / compare / merge loop works, and the way in |
 | 10 | Sign In | GitHub or email and password, with remember me and a reset link |
 | 11 | Create Account | Name, email, password with a strength meter, and the terms checkbox |
 | 12 | Reset Password | Email field for the reset link, shown with its error state |
@@ -34,6 +34,7 @@ The file has three pages:
 The palette is warm and neutral
 Type is Inter, Bold for headings and labels and Regular for body text.
 The landing page adds three larger styles: Hero (56), Section Title (32), and Lead (17).
+The two big landing headlines ("Version control for 3D models." and "Visual diffs that make sense.") use Newsreader Medium at 76 and 56 as a display serif. Newsreader stays on the landing page. The app screens are Inter only.
 
 | Token | Value | Use |
 | --- | --- | --- |
