@@ -88,3 +88,4 @@ Every change color clears the 3:1 contrast minimum for graphics on the stage. Ma
 - Loading states use the on-theme wireframe triangle loader (`MeshLoader`), not a generic spinner.
 - The dashboard is the default view, and the full viewer is a secondary screen.
 - The renders in the frames are placeholders cropped from the mood board. The app renders the real mesh with Three.js, lit to match: dark floor, warm key light, soft shadow.
+- Faint watercolor washes (Foundations → Texture / Watercolor wash / sage, clay, moss) sit behind the page background for a little warmth: about 30% opacity on the landing hero, and only in the gutters around the cards on app screens. They never go in the viewport, behind diff or merge colors, or over text that needs contrast.
