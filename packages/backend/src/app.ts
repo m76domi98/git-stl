@@ -50,7 +50,7 @@ export function createApp(deps: AppDeps): Express {
   const userDb = createUserDb(db)
   const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({
-    commits: createCommitsRepository(db),
+    commits: createCommitsRepository(userDb),
     projects: projectsRepo,
     geometry: deps.geometry,
     storage: deps.storage,

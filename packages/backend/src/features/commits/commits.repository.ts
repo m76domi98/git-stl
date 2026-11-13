@@ -1,4 +1,4 @@
-import type { Pool, PoolClient } from 'pg'
+import type { UserDb } from '../../db/user-db.js'
 import type { Commit, CommitSummary } from './commits.types.js'
 
 export interface NewCommit {
@@ -14,7 +14,7 @@ export interface MeshLocation {
 }
 
 export interface CommitsRepository {
-  listForProject(projectId: string): Promise<CommitSummary[]>
+  listForProject(userId: string, projectId: string): Promise<CommitSummary[]>
   findMeshOwned(commitId: string, ownerId: string): Promise<MeshLocation | null>
   /** Inserts mesh + commit in one transaction, chained onto the latest commit. */
   create(input: NewCommit): Promise<Commit>
@@ -30,10 +30,12 @@ export class ConcurrentCommitError extends Error {
 
 const UNIQUE_VIOLATION = '23505'
 
-export function createCommitsRepository(db: Pool): CommitsRepository {
+/** Every query runs as the signed-in user, so row level security applies. */
+export function createCommitsRepository(db: UserDb): CommitsRepository {
   return {
-    async listForProject(projectId) {
-      const { rows } = await db.query<CommitSummary>(
+    async listForProject(userId, projectId) {
+      return db.query<CommitSummary>(
+        userId,
         `SELECT c.id, c.parent_id, c.message, c.created_at,
                 m.vertex_count, m.face_count, m.file_size,
                 u.github_username AS author
@@ -44,11 +46,11 @@ export function createCommitsRepository(db: Pool): CommitsRepository {
          ORDER BY c.created_at DESC`,
         [projectId],
       )
-      return rows
     },
 
     async findMeshOwned(commitId, ownerId) {
-      const { rows } = await db.query<MeshLocation>(
+      const rows = await db.query<MeshLocation>(
+        ownerId,
         `SELECT c.project_id, c.mesh_id FROM commits c
          JOIN projects p ON p.id = c.project_id
          WHERE c.id = $1 AND p.owner_id = $2`,
@@ -58,40 +60,27 @@ export function createCommitsRepository(db: Pool): CommitsRepository {
     },
 
     async create({ projectId, authorId, message, mesh }) {
-      const client = await db.connect()
       try {
-        await client.query('BEGIN')
-        await client.query(
-          'INSERT INTO meshes (id, file_size, vertex_count, face_count) VALUES ($1, $2, $3, $4)',
-          [mesh.id, mesh.fileSize, mesh.vertexCount, mesh.faceCount],
-        )
-        const { rows: parents } = await client.query<{ id: string }>(
-          'SELECT id FROM commits WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1',
-          [projectId],
-        )
-        const { rows } = await client.query<Commit>(
-          `INSERT INTO commits (project_id, parent_id, mesh_id, author_id, message)
-           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [projectId, parents[0]?.id ?? null, mesh.id, authorId, message],
-        )
-        await client.query('COMMIT')
-        client.release()
-        return rows[0] as Commit
+        return await db.transaction(authorId, async (tx) => {
+          await tx.query(
+            'INSERT INTO meshes (id, file_size, vertex_count, face_count) VALUES ($1, $2, $3, $4)',
+            [mesh.id, mesh.fileSize, mesh.vertexCount, mesh.faceCount],
+          )
+          const { rows: parents } = await tx.query<{ id: string }>(
+            'SELECT id FROM commits WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1',
+            [projectId],
+          )
+          const { rows } = await tx.query<Commit>(
+            `INSERT INTO commits (project_id, parent_id, mesh_id, author_id, message)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [projectId, parents[0]?.id ?? null, mesh.id, authorId, message],
+          )
+          return rows[0] as Commit
+        })
       } catch (err) {
-        await rollback(client)
         if ((err as { code?: string }).code === UNIQUE_VIOLATION) throw new ConcurrentCommitError()
         throw err
       }
     },
-  }
-}
-
-/** Rolls back and releases; a broken connection is discarded instead of reused. */
-async function rollback(client: PoolClient): Promise<void> {
-  try {
-    await client.query('ROLLBACK')
-    client.release()
-  } catch (err) {
-    client.release(err as Error)
   }
 }

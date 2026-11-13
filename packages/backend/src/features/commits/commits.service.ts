@@ -36,7 +36,7 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
   return {
     async list(userId, projectId) {
       const project = await ownedProject(userId, projectId)
-      return commits.listForProject(project.id)
+      return commits.listForProject(userId, project.id)
     },
 
     async readMesh(userId, commitId) {
