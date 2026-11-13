@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: October 22, 2026
+Last updated: November 12, 2026
 
 ## Where things are
 
@@ -51,6 +51,9 @@ The current screens were built from a rough static mockup. Before restructuring 
 - [x] Frames: Dashboard, 3D viewer, visual diff, branch graph, merge / conflict, conflict resolution, merge result, commit history
 - [x] Viewport colors defined separately from site tokens: added green, removed red, unchanged gray
 - [x] `docs/design/README.md` with the Figma link and the frame list
+- [x] Landing page and sign-in flow: sign in, create account, reset password, and check your email
+- [x] Studio look for every 3D view: a dark stage with a warm key light and glass panels over the model
+- [x] Landing hero with a before/after slider, a side-by-side diff section, a display serif, and faint watercolor washes
 
 ### 3. Frontend restructure (next)
 
@@ -59,6 +62,7 @@ The current screens were built from a rough static mockup. Before restructuring 
 - [ ] Convert to `.tsx`, with `tsc --noEmit` in CI
 - [ ] Split `index.css` into tokens, base styles, and per-feature styles, and switch to the Figma palette
 - [ ] Auth seam like the backend's, so a fresh clone builds with a dev login
+- [ ] Build the landing page and sign-in screens from Figma, and the viewer in the studio look
 - [ ] Vitest + React Testing Library, at 80% or better
 
 ### 4. CLI and geometry service
