@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
+import type { UserDb } from './user-db.js'
 
 interface LoginFacts {
   role: string
@@ -53,5 +55,17 @@ export async function assertRuntimeLogin(pool: Pool, expectedRole: string): Prom
     .map(([name]) => name)
   if (excess.length > 0) {
     throw new Error(`${expectedRole} has more privilege than it needs: ${excess.join(', ')}`)
+  }
+}
+
+/**
+ * Fails startup unless a signed user id round-trips through app_user_id(), which
+ * means DB_CONTEXT_KEY matches the key the migrate step stored.
+ */
+export async function assertSignedUserContext(userDb: UserDb): Promise<void> {
+  const probe = randomUUID()
+  const rows = await userDb.query<{ id: string | null }>(probe, 'SELECT app_user_id()::text AS id')
+  if (rows[0]?.id !== probe) {
+    throw new Error('DB_CONTEXT_KEY does not match the key stored by the migrate step')
   }
 }

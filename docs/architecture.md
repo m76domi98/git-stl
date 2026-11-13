@@ -110,13 +110,15 @@ Three Postgres logins, each with only what it needs:
 | --- | --- | --- |
 | schema owner (`POSTGRES_USER`) | `migrate` command only | Everything. The web app never gets it. |
 | `meshgit_app` | Request queries, via `UserDb` | Read and create the signed-in user's own projects, commits, meshes and processing attempts. No updates, deletes, tokens or login codes. |
-| `meshgit_auth` | Sign-in and GitHub sync | Sign-in upserts, logout, CLI login codes, and linking a project to a GitHub repo. No creates or deletes on projects, and no meshes. |
+| `meshgit_auth` | Sign-in and GitHub sync | Sign-in upserts, logout, CLI login codes, and linking a project to a GitHub repo. It can write GitHub tokens but only read the signed-in user's own, through `github_access_token()`. No creates or deletes on projects, and no meshes. |
 
 - Each migration resets both runtime logins: no superuser, `BYPASSRLS`, role or database creation, and no role memberships, so neither can `SET ROLE` into anything stronger. Neither owns a table, so row level security always applies.
 - The server checks both logins at startup and refuses to run if either is missing, logs in as the wrong role, or has more rights than that.
-- Spending caps per user per day: successful uploads, mesh cleanings started (failed ones count too), stored bytes, and projects.
+- Spending caps per user: successful uploads per day, mesh cleanings started per day (failed ones count too), cleanings running at once, stored bytes, and projects. Each cap has a ceiling, so a typo in the environment can't switch it off. Old processing records are pruned on each upload and each migration.
 
-**Known risk.** Row level security finds the current user through the `app.user_id` setting, which `UserDb` sets from the verified session. Any session can change that setting, so an attacker who could run arbitrary SQL as `meshgit_app` could read another user's rows, and create rows as them. Grants still block updates, deletes, tokens and login codes. Closing this needs the user id to come from something the session can't forge, such as a signed value checked by a `SECURITY DEFINER` function. `runtime-login.test.ts` documents the current behavior.
+**Signed user id.** Row level security gets the current user from `app_user_id()`. For each transaction, `UserDb` sets `app.user_id` plus an HMAC of `<user id>:<transaction id>` keyed with `DB_CONTEXT_KEY`, and `app_user_id()` returns the user only when the signature checks out. The key sits in an owner-only table that only that `SECURITY DEFINER` function reads. So SQL running as a runtime login can set any setting it likes, but it can't forge a user id or replay one from another transaction. The server refuses to start if its key doesn't match the stored one.
+
+What's left: SQL injected into the sign-in code (`meshgit_auth`) can still read every user's profile columns and every project, because sign-in has to look users up before anyone is signed in. It can't read GitHub tokens, meshes or anything in `meshgit_app`'s policies.
 
 When project sharing lands, the `meshgit_app` policies need a collaborator path, with tests that a collaborator gets exactly the access granted and nothing more.
 

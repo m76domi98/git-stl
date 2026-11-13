@@ -30,6 +30,7 @@ jobs:
       # Throwaway passwords for the CI-only database, like the one above.
       APP_DB_PASSWORD: ci-app-password-not-a-secret
       AUTH_DB_PASSWORD: ci-auth-password-not-a-secret
+      DB_CONTEXT_KEY: ci-context-key-not-a-secret-0123456789
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
