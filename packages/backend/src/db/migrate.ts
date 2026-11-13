@@ -1,4 +1,5 @@
 import type { Pool } from 'pg'
+import { applyRowSecurity } from './row-security.js'
 
 export async function migrate(pool: Pool): Promise<void> {
   await pool.query(`
@@ -88,4 +89,6 @@ export async function migrate(pool: Pool): Promise<void> {
     CREATE INDEX IF NOT EXISTS commits_project_created_idx
       ON commits (project_id, created_at DESC);
   `)
+
+  await applyRowSecurity(pool)
 }
