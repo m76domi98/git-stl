@@ -4,6 +4,9 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 
 ## 2026-11-13
 
+### Docs
+- The README's setup steps now cover the database secrets and the `migrate` step, and there's a new Security section. The roadmap is up to date.
+
 ### Tooling
 - Local design reference screenshots in `docs/design/possible/` are now ignored by git.
 

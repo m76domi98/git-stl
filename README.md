@@ -18,6 +18,7 @@ Git is a poor fit for STL files. The files are binary, diffs are unreadable, and
 | Interactive 3D viewer and project dashboard | Done |
 | Linear commit history per project | Done |
 | Optional mirroring of commits to a GitHub repo | Done |
+| Per-user isolation in the database, and spending caps | Done |
 | Visual diff (added / removed / unchanged geometry) | In progress |
 | Branching | Planned |
 | Conflict detection and auto-merge of non-overlapping edits | Planned |
@@ -42,9 +43,18 @@ You need Docker, Node 22, and pnpm 11.
 
 ```bash
 pnpm install
-cp .env.template .env      # set POSTGRES_PASSWORD; AUTH_MODE=dev is the default
-docker compose up          # postgres, backend :3001, geometry, frontend :5173
+cp .env.template .env      # then fill in the four secrets below; AUTH_MODE=dev is the default
+docker compose up          # postgres, migrate (runs once), backend :3001, geometry, frontend :5173
 ```
+
+Generate each secret with `openssl rand -hex 32`:
+
+| Variable | What it is |
+| --- | --- |
+| `POSTGRES_PASSWORD` | The schema owner. Only the `migrate` step uses it. |
+| `APP_DB_PASSWORD` | The `meshgit_app` login for request queries |
+| `AUTH_DB_PASSWORD` | The `meshgit_auth` login for sign-in and GitHub sync |
+| `DB_CONTEXT_KEY` | Signs the user id the database trusts. `migrate` and `backend` must share it. |
 
 `AUTH_MODE=dev` signs every request in as a single local user, so you can try the app without setting up GitHub OAuth. It is refused when `NODE_ENV=production` and is only meant for your own machine. All ports bind to `127.0.0.1` unless you change `BIND_ADDR`.
 
@@ -65,17 +75,27 @@ Run from the repo root:
 | `pnpm build` | Build each package |
 | `pnpm --filter backend test:coverage` | Backend tests with coverage (80% threshold) |
 
-Backend tests run against a real Postgres database. Point `DATABASE_URL` at a throwaway database, because the test setup runs migrations against it, and set the two runtime login passwords from `.env`:
+Backend tests run against a real Postgres database. Point `DATABASE_URL` at a throwaway database, because the test setup runs migrations against it. Then load the runtime secrets from `.env`:
 
 ```bash
-DATABASE_URL=postgres://meshgit:<password>@localhost:5432/meshgit_test APP_DB_PASSWORD=<from .env> AUTH_DB_PASSWORD=<from .env> pnpm --filter backend test
+set -a && . ./.env && set +a
+DATABASE_URL=postgres://meshgit:<password>@localhost:5432/meshgit_test pnpm --filter backend test
 ```
 
-The web app never gets the schema owner's login. Migrations run separately (`pnpm --filter backend migrate`, or the `migrate` service in Docker Compose), and the server only connects with two least-privilege logins: `meshgit_app` for request queries and `meshgit_auth` for sign-in. It refuses to start if either is missing or has more rights than it should.
+Tests read `APP_DB_PASSWORD`, `AUTH_DB_PASSWORD` and `DB_CONTEXT_KEY` from the environment and connect with the real runtime logins, so grants and row level security are tested for real.
 
 The geometry service uses ruff (`ruff check .` in `packages/geometry`).
 
 CI runs lint, typecheck, and backend tests against Postgres, plus ruff, on every push and pull request.
+
+## Security
+
+- **The web app never gets the schema owner's login.** Migrations run separately (`pnpm --filter backend migrate`, or the `migrate` service in Compose).
+- **Two least-privilege logins:** the server connects only with `meshgit_app` for requests and `meshgit_auth` for sign-in. It refuses to start if either is missing, has more rights than it should, or signs with the wrong key.
+- **Per-user isolation:** row level security keeps each user to their own projects, commits and meshes. The database trusts only a user id signed for the current transaction, so even arbitrary SQL can't pose as another user. GitHub tokens can only be read for the signed-in user.
+- **Spending caps per user** (`QUOTA_*`): uploads and mesh cleanings per day, cleanings running at once, stored bytes, and projects. They're checked before any expensive work.
+
+Details and the remaining known gaps are in [docs/architecture.md](docs/architecture.md#database-access).
 
 ## Repo layout
 
