@@ -11,6 +11,7 @@ function context(authMode: 'dev' | 'github'): AuthModuleContext {
     config: loadConfig({
       APP_DATABASE_URL: 'postgres://meshgit_app:p@localhost/db',
       AUTH_DATABASE_URL: 'postgres://meshgit_auth:p@localhost/db',
+      DB_CONTEXT_KEY: 'context-key-0123456789-0123456789',
       AUTH_MODE: authMode,
       NODE_ENV: 'test',
     }),

@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { DEFAULT_QUOTAS, type Quotas } from './shared/quotas.js'
+import { DEFAULT_QUOTAS, QUOTA_CEILINGS, type Quotas } from './shared/quotas.js'
 
 const MB = 1024 * 1024
-const cap = (fallback: number) => z.coerce.number().int().min(1).default(fallback)
+const cap = (fallback: number, ceiling: number) =>
+  z.coerce.number().int().min(1).max(ceiling).default(fallback)
 const postgresUrl = z
   .string()
   .refine((u) => URL.canParse(u) && /^postgres(ql)?:$/.test(new URL(u).protocol), {
@@ -17,6 +18,8 @@ const envSchema = z
     // (DATABASE_URL) belongs to the separate migrate command.
     APP_DATABASE_URL: postgresUrl,
     AUTH_DATABASE_URL: postgresUrl,
+    // Signs the user id row level security trusts. Same value the migrate step stores.
+    DB_CONTEXT_KEY: z.string().min(32, 'must be at least 32 characters'),
     FRONTEND_URL: z
       .string()
       .url()
@@ -27,10 +30,17 @@ const envSchema = z
     // 'github' loads the local auth module; 'dev' uses the built-in stub (never in production).
     AUTH_MODE: z.enum(['github', 'dev']).default('github'),
     // Per-user spending caps.
-    QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB),
-    QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay),
-    QUOTA_PROCESSING_PER_DAY: cap(DEFAULT_QUOTAS.maxProcessingPerDay),
-    QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects),
+    QUOTA_STORAGE_MB: cap(DEFAULT_QUOTAS.maxStorageBytes / MB, QUOTA_CEILINGS.storageMb),
+    QUOTA_UPLOADS_PER_DAY: cap(DEFAULT_QUOTAS.maxUploadsPerDay, QUOTA_CEILINGS.uploadsPerDay),
+    QUOTA_PROCESSING_PER_DAY: cap(
+      DEFAULT_QUOTAS.maxProcessingPerDay,
+      QUOTA_CEILINGS.processingPerDay,
+    ),
+    QUOTA_PROJECTS: cap(DEFAULT_QUOTAS.maxProjects, QUOTA_CEILINGS.projects),
+    QUOTA_CONCURRENT_CLEANS: cap(
+      DEFAULT_QUOTAS.maxConcurrentCleans,
+      QUOTA_CEILINGS.concurrentCleans,
+    ),
   })
   .refine((e) => !(e.AUTH_MODE === 'dev' && e.NODE_ENV === 'production'), {
     message: 'AUTH_MODE=dev is not allowed when NODE_ENV=production',
@@ -44,6 +54,8 @@ export interface Config {
   readonly appDatabaseUrl: string
   /** meshgit_auth: sign-in and GitHub sync. */
   readonly authDatabaseUrl: string
+  /** Signs the per-transaction user id (see db/user-context.ts). */
+  readonly dbContextKey: string
   readonly frontendUrl: string
   readonly geometryServiceUrl: string
   readonly uploadsDir: string
@@ -63,6 +75,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     port: e.PORT,
     appDatabaseUrl: e.APP_DATABASE_URL,
     authDatabaseUrl: e.AUTH_DATABASE_URL,
+    dbContextKey: e.DB_CONTEXT_KEY,
     frontendUrl: e.FRONTEND_URL,
     geometryServiceUrl: e.GEOMETRY_SERVICE_URL,
     uploadsDir: e.UPLOADS_DIR,
@@ -71,6 +84,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       maxStorageBytes: e.QUOTA_STORAGE_MB * MB,
       maxUploadsPerDay: e.QUOTA_UPLOADS_PER_DAY,
       maxProcessingPerDay: e.QUOTA_PROCESSING_PER_DAY,
+      maxConcurrentCleans: e.QUOTA_CONCURRENT_CLEANS,
       maxProjects: e.QUOTA_PROJECTS,
     }),
   })

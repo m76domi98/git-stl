@@ -11,7 +11,7 @@ async function main(): Promise<void> {
   const config = loadMigrateConfig()
   const pool = new pg.Pool({ connectionString: config.databaseUrl })
   try {
-    await migrate(pool, config.passwords)
+    await migrate(pool, config)
   } finally {
     await pool.end()
   }

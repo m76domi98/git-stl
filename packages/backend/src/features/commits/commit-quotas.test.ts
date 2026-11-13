@@ -130,3 +130,29 @@ describe('daily processing budget', () => {
     expect(geometry.clean).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('cleanings running at once', () => {
+  it('refuses a second clean while one is running, without spending budget', async () => {
+    let finish: () => void = () => {}
+    const geometry = fakeGeometry()
+    const succeed = geometry.clean
+    geometry.clean = vi.fn(async (file: Buffer) => {
+      await new Promise<void>((resolve) => (finish = resolve))
+      return succeed(file)
+    })
+    const { upload } = await setup({ maxConcurrentCleans: 1, maxProcessingPerDay: 2 }, geometry)
+
+    const first = upload().then((r) => r)
+    await vi.waitFor(() => expect(geometry.clean).toHaveBeenCalledTimes(1))
+    const [second, third] = await Promise.all([upload(), upload()])
+    finish()
+
+    expect(second.status).toBe(429)
+    expect(second.body.error).toBe('Too many uploads processing at once, try again shortly')
+    expect(third.status).toBe(429)
+    expect((await first).status).toBe(201)
+    // The refused uploads didn't use the budget of 2, so one more still goes through.
+    geometry.clean = vi.fn(succeed)
+    expect((await upload()).status).toBe(201)
+  })
+})

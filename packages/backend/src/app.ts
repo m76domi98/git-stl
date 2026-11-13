@@ -9,6 +9,7 @@ import { createCommitsRepository } from './features/commits/commits.repository.j
 import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
 import { createProcessingBudget } from './features/commits/processing-budget.js'
+import { createInFlightLimit } from './shared/in-flight-limit.js'
 import { diffRouter } from './features/diff/diff.routes.js'
 import { mergeRouter } from './features/merge/merge.routes.js'
 import { createUserDb } from './db/user-db.js'
@@ -26,7 +27,7 @@ const JSON_BODY_LIMIT = '100kb'
 const RATE_LIMIT = { windowMs: 60_000, limit: 300 }
 
 export interface AppDeps {
-  config: Pick<Config, 'frontendUrl'>
+  config: Pick<Config, 'frontendUrl' | 'dbContextKey'>
   auth: AuthModule
   db: Pool
   geometry: GeometryClient
@@ -51,7 +52,7 @@ export function createApp(deps: AppDeps): Express {
 
   auth.install?.(app)
 
-  const userDb = createUserDb(db)
+  const userDb = createUserDb(db, { contextKey: deps.config.dbContextKey })
   const quotas = deps.quotas ?? DEFAULT_QUOTAS
   const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({
@@ -61,6 +62,7 @@ export function createApp(deps: AppDeps): Express {
     storage: deps.storage,
     events: deps.events,
     processing: createProcessingBudget(userDb),
+    cleaning: createInFlightLimit(quotas.maxConcurrentCleans),
     quotas,
   })
 

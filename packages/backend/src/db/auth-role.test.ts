@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import pool from '../test/admin-pool.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
-import { authPool } from '../test/runtime-pools.js'
+import { createUserDb } from './user-db.js'
+import { AUTH_ROLE } from './roles.js'
+import { CONTEXT_KEY, appPool, authPool } from '../test/runtime-pools.js'
 
 const PERMISSION_DENIED = '42501'
 
@@ -33,23 +35,20 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await deleteUsers(pool, [owner])
-  await Promise.all([pool.end(), authPool.end()])
+  await Promise.all([pool.end(), authPool.end(), appPool.end()])
 })
 
 describe('the auth login', () => {
-  it('runs the sign-in upsert, logout, and token lookup', async () => {
+  it('runs the sign-in upsert and logout', async () => {
     const upsert = `INSERT INTO users (github_id, github_username, github_avatar, email, github_access_token)
-      VALUES ($1, 'octo', NULL, NULL, 'enc') ON CONFLICT (github_id) DO UPDATE
+      VALUES ($1, 'octo', NULL, NULL, $2) ON CONFLICT (github_id) DO UPDATE
       SET github_username = EXCLUDED.github_username, github_avatar = EXCLUDED.github_avatar,
-          email = COALESCE(EXCLUDED.email, users.email), github_access_token = EXCLUDED.github_access_token
-      RETURNING *`
-    await expect(asAuth(upsert, [`gh-${randomUUID()}`])).resolves.toHaveLength(1)
+          email = COALESCE(EXCLUDED.email, users.email), github_access_token = $2
+      RETURNING id, github_id, github_username, github_avatar, email`
+    await expect(asAuth(upsert, [`gh-${randomUUID()}`, 'enc'])).resolves.toHaveLength(1)
     await expect(
       asAuth('UPDATE users SET tokens_invalidated_at = NOW() WHERE id = $1', [owner]),
     ).resolves.toEqual([])
-    await expect(
-      asAuth('SELECT github_access_token FROM users WHERE id = $1', [owner]),
-    ).resolves.toHaveLength(1)
   })
 
   it('manages CLI login codes', async () => {
@@ -96,5 +95,40 @@ describe('the auth login', () => {
     for (const role of ['meshgit_app', migrationRole]) {
       await expect(asAuth(`SET ROLE "${role}"`)).rejects.toMatchObject({ code: PERMISSION_DENIED })
     }
+  })
+})
+
+describe('GitHub tokens', () => {
+  const tokenDb = createUserDb(authPool, { contextKey: CONTEXT_KEY, role: AUTH_ROLE })
+
+  beforeAll(async () => {
+    await pool.query("UPDATE users SET github_access_token = 'encrypted-token' WHERE id = $1", [
+      owner,
+    ])
+  })
+
+  it("can't be read directly, even by the auth login", async () => {
+    await expect(asAuth('SELECT github_access_token FROM users')).rejects.toMatchObject({
+      code: PERMISSION_DENIED,
+    })
+    await expect(asAuth('SELECT * FROM users')).rejects.toMatchObject({ code: PERMISSION_DENIED })
+  })
+
+  it('come back only for the signed-in user', async () => {
+    await expect(asAuth('SELECT github_access_token() AS token')).resolves.toEqual([
+      { token: null },
+    ])
+    await expect(tokenDb.query(owner, 'SELECT github_access_token() AS token')).resolves.toEqual([
+      { token: 'encrypted-token' },
+    ])
+    await expect(
+      tokenDb.query(randomUUID(), 'SELECT github_access_token() AS token'),
+    ).resolves.toEqual([{ token: null }])
+  })
+
+  it('are out of reach of the app login', async () => {
+    await expect(appPool.query('SELECT github_access_token()')).rejects.toMatchObject({
+      code: PERMISSION_DENIED,
+    })
   })
 })
