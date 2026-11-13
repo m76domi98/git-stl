@@ -4,7 +4,7 @@ import { createApp, type AppDeps } from '../app.js'
 import { createCommitEvents } from '../features/commits/commit-events.js'
 import type { GeometryClient } from '../shared/geometry/geometry-client.js'
 import type { MeshStorage } from '../shared/storage.js'
-import { appPool } from './app-pool.js'
+import { appPool } from './runtime-pools.js'
 import { fakeAuth } from './fake-auth.js'
 
 const unusedStorage: MeshStorage = {
