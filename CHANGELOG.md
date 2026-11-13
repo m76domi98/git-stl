@@ -4,6 +4,9 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 
 ## 2026-11-13
 
+### Tooling
+- Local design reference screenshots in `docs/design/possible/` are now ignored by git.
+
 ### Backend
 - Row level security now trusts only a signed user id (`DB_CONTEXT_KEY`), so a database session can't pose as another user even with arbitrary SQL.
 - GitHub tokens can only be read for the signed-in user, so SQL injected into sign-in can't read anyone's token.
