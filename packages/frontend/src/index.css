@@ -248,47 +248,6 @@ button, input {
   cursor: default;
 }
 
-/* ── Viewport ──────────────────────────────────────── */
-.viewport-card {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.model-actions .btn {
-  width: 100%;
-  margin-top: 8px;
-  justify-content: flex-start;
-}
-
-.model-info {
-  width: 200px;
-  flex-shrink: 0;
-  border-left: 1px solid var(--border);
-  padding: 16px;
-}
-
-.model-info-title {
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin-bottom: 12px;
-  text-transform: uppercase;
-}
-
-.model-info-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.model-info-row:last-child { border-bottom: none; }
-.model-info-row span:last-child { color: var(--text); font-family: var(--mono); font-size: 0.72rem; }
-
 .logo-mark {
   width: 20px;
   height: 20px;
