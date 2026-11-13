@@ -12,6 +12,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/test/**',
         'src/server.ts',
+        'src/migrate-cli.ts',
         'src/features/auth/**',
         'src/features/github/**',
       ],

@@ -65,11 +65,13 @@ Run from the repo root:
 | `pnpm build` | Build each package |
 | `pnpm --filter backend test:coverage` | Backend tests with coverage (80% threshold) |
 
-Backend tests run against a real Postgres database. Point `DATABASE_URL` at a throwaway database, because the test setup runs migrations against it:
+Backend tests run against a real Postgres database. Point `DATABASE_URL` at a throwaway database, because the test setup runs migrations against it, and set the two runtime login passwords from `.env`:
 
 ```bash
-DATABASE_URL=postgres://meshgit:<password>@localhost:5432/meshgit_test pnpm --filter backend test
+DATABASE_URL=postgres://meshgit:<password>@localhost:5432/meshgit_test APP_DB_PASSWORD=<from .env> AUTH_DB_PASSWORD=<from .env> pnpm --filter backend test
 ```
+
+The web app never gets the schema owner's login. Migrations run separately (`pnpm --filter backend migrate`, or the `migrate` service in Docker Compose), and the server only connects with two least-privilege logins: `meshgit_app` for request queries and `meshgit_auth` for sign-in. It refuses to start if either is missing or has more rights than it should.
 
 The geometry service uses ruff (`ruff check .` in `packages/geometry`).
 

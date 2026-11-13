@@ -8,6 +8,7 @@ import type { CommitEvents } from './features/commits/commit-events.js'
 import { createCommitsRepository } from './features/commits/commits.repository.js'
 import { commitsRouter } from './features/commits/commits.routes.js'
 import { createCommitsService } from './features/commits/commits.service.js'
+import { createProcessingBudget } from './features/commits/processing-budget.js'
 import { diffRouter } from './features/diff/diff.routes.js'
 import { mergeRouter } from './features/merge/merge.routes.js'
 import { createUserDb } from './db/user-db.js'
@@ -59,6 +60,7 @@ export function createApp(deps: AppDeps): Express {
     geometry: deps.geometry,
     storage: deps.storage,
     events: deps.events,
+    processing: createProcessingBudget(userDb),
     quotas,
   })
 

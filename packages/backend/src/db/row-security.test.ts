@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import pool from './pool.js'
-import { APP_ROLE } from './row-security.js'
+import pool from '../test/admin-pool.js'
+import { APP_ROLE } from './roles.js'
 import { createUser, deleteUsers } from '../test/fixtures.js'
 
 const PERMISSION_DENIED = '42501'
@@ -36,7 +36,10 @@ beforeAll(async () => {
   )
   bobProject = rows[0]!.id
   bobMesh = randomUUID()
-  await pool.query('INSERT INTO meshes (id, file_size) VALUES ($1, 10)', [bobMesh])
+  await pool.query('INSERT INTO meshes (id, file_size, owner_id) VALUES ($1, 10, $2)', [
+    bobMesh,
+    bob,
+  ])
   await pool.query(
     'INSERT INTO commits (project_id, mesh_id, author_id, message) VALUES ($1, $2, $3, $4)',
     [bobProject, bobMesh, bob, 'bob commit'],

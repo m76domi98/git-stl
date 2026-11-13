@@ -7,6 +7,7 @@ import type { ProjectsRepository } from '../projects/projects.repository.js'
 import type { CommitEvents } from './commit-events.js'
 import { ConcurrentCommitError, type CommitsRepository, type Usage } from './commits.repository.js'
 import type { CommitSummary, CreatedCommit, UploadedFile } from './commits.types.js'
+import type { ProcessingBudget } from './processing-budget.js'
 
 export interface CommitsService {
   list(userId: string, projectId: string): Promise<CommitSummary[]>
@@ -23,11 +24,12 @@ export interface CommitsServiceDeps {
   geometry: GeometryClient
   storage: MeshStorage
   events: CommitEvents
-  quotas: Pick<Quotas, 'maxStorageBytes' | 'maxUploadsPerDay'>
+  processing: ProcessingBudget
+  quotas: Pick<Quotas, 'maxStorageBytes' | 'maxUploadsPerDay' | 'maxProcessingPerDay'>
 }
 
 export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
-  const { commits, projects, geometry, storage, events, quotas } = deps
+  const { commits, projects, geometry, storage, events, processing, quotas } = deps
 
   const ownedProject = async (userId: string, projectId: string) => {
     const project = await projects.findOwned(projectId, userId)
@@ -67,6 +69,9 @@ export function createCommitsService(deps: CommitsServiceDeps): CommitsService {
       // Checked before cleaning so a capped user can't spend geometry CPU, then again
       // inside the insert transaction so parallel uploads can't all slip past.
       checkQuota(await commits.usageFor(userId), file.buffer.length)
+      if (!(await processing.claim(userId, quotas.maxProcessingPerDay))) {
+        throw new AppError(429, 'Daily processing limit reached')
+      }
       const cleaned = await geometry.clean(file.buffer)
       const mesh = {
         id: randomUUID(),

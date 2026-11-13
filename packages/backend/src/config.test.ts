@@ -3,8 +3,8 @@ import { loadConfig } from './config.js'
 import { DEFAULT_QUOTAS } from './shared/quotas.js'
 
 const base = {
-  DATABASE_URL: 'postgres://u:p@localhost:5432/db',
-  APP_DB_PASSWORD: 'test-app-password-0123',
+  APP_DATABASE_URL: 'postgres://meshgit_app:p@localhost:5432/db',
+  AUTH_DATABASE_URL: 'postgres://meshgit_auth:p@localhost:5432/db',
 }
 
 describe('loadConfig', () => {
@@ -14,8 +14,8 @@ describe('loadConfig', () => {
     expect(config).toEqual({
       nodeEnv: 'development',
       port: 3001,
-      databaseUrl: base.DATABASE_URL,
-      appDbPassword: base.APP_DB_PASSWORD,
+      appDatabaseUrl: base.APP_DATABASE_URL,
+      authDatabaseUrl: base.AUTH_DATABASE_URL,
       frontendUrl: 'http://localhost:5173',
       geometryServiceUrl: 'http://geometry:8000',
       uploadsDir: '/app/uploads',
@@ -41,13 +41,10 @@ describe('loadConfig', () => {
     expect(config.uploadsDir).toBe('/tmp/uploads')
   })
 
-  it('rejects a missing DATABASE_URL', () => {
-    expect(() => loadConfig({})).toThrow(/DATABASE_URL/)
-  })
-
-  it('rejects a missing or short APP_DB_PASSWORD', () => {
-    expect(() => loadConfig({ DATABASE_URL: base.DATABASE_URL })).toThrow(/APP_DB_PASSWORD/)
-    expect(() => loadConfig({ ...base, APP_DB_PASSWORD: 'short' })).toThrow(/APP_DB_PASSWORD/)
+  it.each(['APP_DATABASE_URL', 'AUTH_DATABASE_URL'])('fails startup without %s', (name) => {
+    expect(() => loadConfig({ ...base, [name]: undefined })).toThrow(name)
+    expect(() => loadConfig({ ...base, [name]: '' })).toThrow(`${name}: must be a postgres:// URL`)
+    expect(() => loadConfig({ ...base, [name]: 'http://localhost/db' })).toThrow(/postgres/)
   })
 
   it('rejects an unknown AUTH_MODE', () => {
@@ -75,11 +72,13 @@ describe('loadConfig', () => {
       ...base,
       QUOTA_STORAGE_MB: '10',
       QUOTA_UPLOADS_PER_DAY: '5',
+      QUOTA_PROCESSING_PER_DAY: '7',
       QUOTA_PROJECTS: '3',
     })
     expect(config.quotas).toEqual({
       maxStorageBytes: 10 * 1024 * 1024,
       maxUploadsPerDay: 5,
+      maxProcessingPerDay: 7,
       maxProjects: 3,
     })
   })
