@@ -5,6 +5,7 @@ export interface ProjectsRepository {
   listByOwner(ownerId: string): Promise<ProjectSummary[]>
   create(ownerId: string, input: CreateProjectInput): Promise<Project>
   findOwned(id: string, ownerId: string): Promise<Project | null>
+  countByOwner(ownerId: string): Promise<number>
 }
 
 /** Every query runs as the owner, so row level security backs up the owner filters. */
@@ -39,6 +40,15 @@ export function createProjectsRepository(db: UserDb): ProjectsRepository {
         [id, ownerId],
       )
       return rows[0] ?? null
+    },
+
+    async countByOwner(ownerId) {
+      const [row] = await db.query<{ count: number }>(
+        ownerId,
+        'SELECT COUNT(*)::int AS count FROM projects WHERE owner_id = $1',
+        [ownerId],
+      )
+      return row?.count ?? 0
     },
   }
 }

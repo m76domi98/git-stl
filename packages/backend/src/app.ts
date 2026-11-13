@@ -51,6 +51,7 @@ export function createApp(deps: AppDeps): Express {
   auth.install?.(app)
 
   const userDb = createUserDb(db)
+  const quotas = deps.quotas ?? DEFAULT_QUOTAS
   const projectsRepo = createProjectsRepository(userDb)
   const commits = createCommitsService({
     commits: createCommitsRepository(userDb),
@@ -58,10 +59,14 @@ export function createApp(deps: AppDeps): Express {
     geometry: deps.geometry,
     storage: deps.storage,
     events: deps.events,
-    quotas: deps.quotas ?? DEFAULT_QUOTAS,
+    quotas,
   })
 
-  app.use('/api/projects', auth.authenticate, projectsRouter(createProjectsService(projectsRepo)))
+  app.use(
+    '/api/projects',
+    auth.authenticate,
+    projectsRouter(createProjectsService(projectsRepo, quotas)),
+  )
   app.use('/api/commits', auth.authenticate, commitsRouter(commits))
   app.use('/api/diff', auth.authenticate, diffRouter())
   app.use('/api/merge', auth.authenticate, mergeRouter())
