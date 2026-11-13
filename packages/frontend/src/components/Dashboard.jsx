@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Viewer from './Viewer.jsx'
 import MeshLoader from './MeshLoader.jsx'
 import { formatBytes, relativeTime, dayLabel } from '../lib/format.js'
+import './Dashboard.css'
 
 function groupByDay(commits) {
   const items = []

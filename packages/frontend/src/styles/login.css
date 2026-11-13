@@ -1,0 +1,53 @@
+/* ── Login screen ──────────────────────────────────── */
+.login-screen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle, var(--border) 1px, transparent 1px) 0 0 / 28px 28px,
+    var(--bg);
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 56px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.login-tagline {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.github-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+  background: var(--accent);
+  border-radius: 7px;
+  border: none;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.github-btn:hover { opacity: 0.88; }

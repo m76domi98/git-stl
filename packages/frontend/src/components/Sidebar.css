@@ -1,0 +1,224 @@
+/* ── Nav rail (logo, workspace, nav, projects, user) ──── */
+.nav-rail {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.workspace-pill {
+  margin: 0 12px 12px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.nav-list {
+  padding: 0 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: default;
+}
+
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.nav-item-icon {
+  width: 18px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.sidebar-new-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  width: 22px;
+  height: 22px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sidebar-new-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.new-project-form {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.new-project-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  outline: none;
+  width: 100%;
+}
+
+.new-project-input:focus { border-color: var(--accent); }
+
+.new-project-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sidebar-action-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 5px 0;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sidebar-action-btn:hover { background: var(--accent); color: white; }
+.sidebar-action-btn.muted { border-color: var(--border); color: var(--muted); }
+.sidebar-action-btn.muted:hover { background: var(--border); color: var(--text); }
+
+.sidebar-error {
+  padding: 8px 14px;
+  font-size: 0.72rem;
+  color: var(--red);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.project-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 6px;
+}
+
+.project-item {
+  padding: 10px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.project-item:hover { background: var(--surface-2); }
+.project-item.active { background: var(--accent-soft); border: 1px solid var(--accent); }
+
+.project-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.gh-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.gh-link:hover { text-decoration: underline; }
+
+.gh-connect-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.66rem;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.gh-connect-btn:hover { color: var(--accent); }
+.gh-connect-btn:disabled { opacity: 0.5; cursor: default; }
+
+.project-empty {
+  padding: 16px 14px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.user-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.user-footer .logout-link { margin-left: auto; }
+
+.logout-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: var(--sans);
+  padding: 0;
+}
+
+.logout-link:hover { color: var(--text); }

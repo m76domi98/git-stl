@@ -4,6 +4,12 @@ Notable changes to MeshGit, newest first. Dates are when the change was merged i
 
 ## 2026-11-12
 
+### Frontend
+- Split the single 800-line stylesheet into design tokens, base styles, and a stylesheet next to each component. The built CSS is unchanged.
+
+### Backend
+- A test now checks that every API route rejects requests without a signed-in user.
+
 ### Design
 - New landing hero: a serif headline, a before/after slider on the model, and labels for added, removed, and unchanged geometry.
 - New "See the difference" section with a side-by-side diff viewer comparing a base commit and a feature branch.

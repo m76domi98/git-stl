@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Viewer from './Viewer.jsx'
 import { formatBytes, relativeTime } from '../lib/format.js'
+import './ModelViewer.css'
 
 export default function ModelViewer({ file, commits = [], token, initialCommitId = null, onBack }) {
   const [modelStats, setModelStats] = useState(null)
