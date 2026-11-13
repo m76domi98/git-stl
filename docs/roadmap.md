@@ -69,6 +69,7 @@ The current screens were built from a rough static mockup. Before restructuring 
 
 - [ ] CLI in TypeScript with `commit`, `log`, and `diff` commands against the API
 - [ ] Geometry service split into modules (`api`, `cleaning`, `diff`) with pytest, and pytest in CI
+- [ ] Stronger mesh repair: when trimesh's cleanup still leaves a mesh that isn't watertight, fall back to MeshFix (`pymeshfix`) to fix non-manifold edges, self-intersections, and holes. Measure the success rate on real STLs against the 95% target
 
 ### 5. Product features
 
