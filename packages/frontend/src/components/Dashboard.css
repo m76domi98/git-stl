@@ -49,3 +49,76 @@
   font-size: 0.75rem;
   color: var(--red);
 }
+
+/* ── Stat card ─────────────────────────────────────── */
+.stat-card {
+  margin: 0 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.stat-cols {
+  flex: 1;
+  display: flex;
+  padding: 14px 18px;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.stat-col-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-col-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stat-thumb {
+  width: 180px;
+  flex-shrink: 0;
+  background: var(--viewport-bg);
+  border: none;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-thumb:disabled { cursor: default; }
+
+.stat-thumb-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  color: var(--viewport-muted);
+}
+
+/* ── Commits card ──────────────────────────────────── */
+.commits-card-header {
+  padding: 16px 20px 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pull-history-link {
+  text-align: center;
+  padding: 14px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  cursor: default;
+}
